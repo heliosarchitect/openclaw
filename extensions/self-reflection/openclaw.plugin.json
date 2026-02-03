@@ -1,0 +1,25 @@
+{
+  "id": "self-reflection",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable self-reflection coach"
+      },
+      "autoReflect": {
+        "type": "boolean",
+        "default": false,
+        "description": "Automatically run reflection at end of day (requires cron)"
+      },
+      "reflectionPeriod": {
+        "type": "string",
+        "enum": ["day", "week", "month"],
+        "default": "week",
+        "description": "Default time period for reflection analysis"
+      }
+    }
+  }
+}

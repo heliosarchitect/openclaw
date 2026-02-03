@@ -1,0 +1,29 @@
+{
+  "id": "conversation-summarizer",
+  "kind": "memory",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable automatic conversation summarization"
+      },
+      "minMessages": {
+        "type": "integer",
+        "default": 4,
+        "minimum": 2,
+        "maximum": 20,
+        "description": "Minimum messages required to trigger summarization"
+      },
+      "minImportance": {
+        "type": "number",
+        "default": 1.3,
+        "minimum": 1.0,
+        "maximum": 3.0,
+        "description": "Minimum importance score to store summary"
+      }
+    }
+  }
+}
