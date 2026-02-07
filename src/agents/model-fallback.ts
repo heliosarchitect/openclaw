@@ -4,6 +4,7 @@ import {
   ensureAuthProfileStore,
   isProfileInCooldown,
   resolveAuthProfileOrder,
+  resolveProfileUnusableUntilForDisplay,
 } from "./auth-profiles.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "./defaults.js";
 import {
@@ -265,10 +266,22 @@ export async function runWithModelFallback<T>(params: {
 
       if (profileIds.length > 0 && !isAnyProfileAvailable) {
         // All profiles for this provider are in cooldown; skip without attempting
+        // Find the soonest cooldown expiry to show remaining time
+        const cooldownEnds = profileIds
+          .map((id) => resolveProfileUnusableUntilForDisplay(authStore, id))
+          .filter((t): t is number => t !== null && t > Date.now());
+        const soonestEnd = cooldownEnds.length > 0 ? Math.min(...cooldownEnds) : null;
+        const remainingMs = soonestEnd ? soonestEnd - Date.now() : null;
+        const remainingStr = remainingMs
+          ? remainingMs >= 60_000
+            ? `${Math.ceil(remainingMs / 60_000)}m remaining`
+            : `${Math.ceil(remainingMs / 1000)}s remaining`
+          : "";
+        const cooldownSuffix = remainingStr ? ` (${remainingStr})` : "";
         attempts.push({
           provider: candidate.provider,
           model: candidate.model,
-          error: `Provider ${candidate.provider} is in cooldown (all profiles unavailable)`,
+          error: `Provider ${candidate.provider} is in cooldown (all profiles unavailable)${cooldownSuffix}`,
           reason: "rate_limit",
         });
         continue;
