@@ -55,24 +55,39 @@ def memory_id(content, timestamp):
     """Generate deterministic ID for a memory"""
     return hashlib.sha256(f"{content}{timestamp}".encode()).hexdigest()[:16]
 
-def add_memory(content, source="manual", category=None, importance=1.0, timestamp=None):
-    """Add a memory to the database"""
+def add_memory(content, source="manual", category=None, categories=None, importance=1.0, timestamp=None):
+    """Add a memory to the database
+
+    PHASE 2B: Multi-category support via categories parameter.
+    The category field stores a JSON array when multiple categories provided.
+    """
     if timestamp is None:
         timestamp = datetime.now().isoformat()
-    
+
     mem_id = memory_id(content, timestamp)
-    
+
+    # Handle categories (plural) - store as JSON array
+    if categories is not None:
+        if isinstance(categories, list):
+            category_value = json.dumps(categories)
+        else:
+            category_value = json.dumps([categories])
+    elif category is not None:
+        category_value = json.dumps([category]) if isinstance(category, str) else json.dumps(category)
+    else:
+        category_value = None
+
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    
+
     c.execute('''
         INSERT OR REPLACE INTO memories (id, content, source, category, timestamp, importance, embedding_text)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (mem_id, content, source, category, timestamp, importance, content.lower()))
-    
+    ''', (mem_id, content, source, category_value, timestamp, importance, content.lower()))
+
     conn.commit()
     conn.close()
-    
+
     return mem_id
 
 def search_memories(query, limit=10, temporal_weight=0.7, date_range=None, category=None):

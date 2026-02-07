@@ -502,6 +502,12 @@ const cortexPlugin: OpenClawPlugin = {
     // Track pending STM matches for re-ranking
     const pendingStmMatches = new Map<string, Array<STMItem & { matchScore: number }>>();
 
+    // Dedupe cache for auto-capture (prevents capturing same content multiple times)
+    // Key: content hash, Value: timestamp when captured
+    const recentlyCaptures = new Map<string, number>();
+    const DEDUPE_WINDOW_MS = 60 * 60 * 1000; // 1 hour window
+    const contentHash = (s: string) => s.slice(0, 100).toLowerCase().replace(/\s+/g, " ").trim();
+
     // PHASE 2B: Initialize category manager (loads from categories.json)
     const categoriesPath = join(homedir(), ".openclaw", "workspace", "memory", "categories.json");
     categoryManager = new CategoryManager(categoriesPath);
@@ -2560,6 +2566,26 @@ const cortexPlugin: OpenClawPlugin = {
             // Only capture if notable (importance >= 1.5)
             if (importance >= 1.5) {
               const content = text.slice(0, 500);
+
+              // Dedupe check: skip if recently captured
+              const hash = contentHash(content);
+              const lastCaptured = recentlyCaptures.get(hash);
+              if (lastCaptured && Date.now() - lastCaptured < DEDUPE_WINDOW_MS) {
+                api.logger.debug?.(`Cortex auto-capture skipped (dedupe): "${text.slice(0, 40)}..."`);
+                continue;
+              }
+
+              // Mark as captured
+              recentlyCaptures.set(hash, Date.now());
+
+              // Clean up old entries (keep cache small)
+              if (recentlyCaptures.size > 1000) {
+                const cutoff = Date.now() - DEDUPE_WINDOW_MS;
+                for (const [k, v] of recentlyCaptures) {
+                  if (v < cutoff) { recentlyCaptures.delete(k); }
+                }
+              }
+
               await bridge.addToSTM(content, category, importance);
 
               // Use GPU daemon if available for fast semantic indexing
