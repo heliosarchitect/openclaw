@@ -537,11 +537,12 @@ async def _handle_cortex(args: dict) -> list[TextContent]:
 
     elif action == "create_category":
         name = args.get("category")
+        description = args.get("description", "")
         keywords = args.get("keywords", [])
         if not name:
             return err("category (name) is required for create_category")
 
-        result = brain.create_category(name, keywords)
+        result = brain.create_category(name, description=description, keywords=keywords)
         return ok(json.dumps(result))
 
     elif action == "list_categories":
