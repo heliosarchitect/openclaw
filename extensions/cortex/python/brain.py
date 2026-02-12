@@ -359,6 +359,7 @@ class UnifiedBrain:
             )
 
         conn.commit()
+        conn.close()
 
         # Auto-extract: if message contains @remember/@insight/@decision, create STM with provenance
         tags = {"@remember", "@insight", "@decision"}
@@ -395,8 +396,6 @@ class UnifiedBrain:
             except Exception:
                 pass  # Best-effort
 
-        conn.close()
-
         return {
             "id": msg_id,
             "thread_id": thread_id,
@@ -427,41 +426,6 @@ class UnifiedBrain:
                 outcome=out,
                 consequences=cons,
                 source=f"synapse:{from_agent}",
-                source_message_id=msg_id,
-            )
-
-    def _extract_causal_patterns(self, msg_id: str, body: str, from_agent: str):
-        """Extract causal relationships from natural language.
-        
-        Looks for patterns like:
-          "X causes Y" → atom(X, causes, Y, <inferred>)
-          "X leads to Y" → atom(X, leads to, Y, <inferred>)
-          "because X, Y" → atom(X, causes, Y, <inferred>)
-        
-        Conservative: only extracts clear, explicit causal statements.
-        Stores as STM with provenance (not atoms — too risky for auto-extraction).
-        """
-        import re
-        
-        causal_patterns = [
-            # "X causes Y" / "X leads to Y" / "X results in Y" / "X triggers Y"
-            r"([A-Za-z][^.]{5,60}?)\s+(?:causes?|leads?\s+to|results?\s+in|triggers?)\s+([^.]{5,80})",
-        ]
-        
-        extracted = []
-        for pat in causal_patterns:
-            for match in re.finditer(pat, body):
-                cause, effect = match.group(1).strip(), match.group(2).strip()
-                if len(cause) > 5 and len(effect) > 5:
-                    extracted.append(f"CAUSAL: {cause} → {effect}")
-        
-        if extracted:
-            content = f"Auto-extracted causal patterns:\n" + "\n".join(extracted[:5])
-            self.remember(
-                content=content[:1000],
-                categories=["causal", "extracted"],
-                importance=1.5,
-                source=f"auto-extract:{from_agent}",
                 source_message_id=msg_id,
             )
 
