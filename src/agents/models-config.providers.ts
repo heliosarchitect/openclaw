@@ -454,15 +454,18 @@ export async function resolveImplicitProviders(params: {
   });
 
   // Inject claude-opus-4-6 into the anthropic model list when not yet in pi-ai.
-  // Gate on having anthropic auth (same pattern as minimax/moonshot/etc.) and
-  // include the apiKey so pi-coding-agent's ModelRegistry validation passes.
+  // Gate on having anthropic auth (env key, api_key/token profile, or OAuth profile)
+  // and include the apiKey so pi-coding-agent's ModelRegistry validation passes.
   const anthropicPatch = buildAnthropicProviderWithOpus46();
   if (anthropicPatch) {
     const anthropicKey =
       resolveEnvApiKeyVarName("anthropic") ??
       resolveApiKeyFromProfiles({ provider: "anthropic", store: authStore });
-    if (anthropicKey) {
-      providers.anthropic = { ...anthropicPatch, apiKey: anthropicKey };
+    const hasAnthropicOAuth = listProfilesForProvider(authStore, "anthropic").some(
+      (id) => authStore.profiles[id]?.type === "oauth",
+    );
+    if (anthropicKey || hasAnthropicOAuth) {
+      providers.anthropic = { ...anthropicPatch, apiKey: anthropicKey ?? "anthropic-oauth" };
     }
   }
 
