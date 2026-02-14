@@ -1081,41 +1081,31 @@ const cortexPlugin: OpenClawPlugin = {
               };
             }
 
-            // Load and update STM
-            const stmData = await bridge.loadSTMDirect();
-            const stmItems = stmData.short_term_memory;
-            let found = false;
-            let updatedItem: STMItem | null = null;
+            // Find the memory by ID or content match in brain.db
+            const stmItems = await bridge.getRecentSTM(config.stmCapacity);
+            let targetItem: STMItem | null = null;
 
             for (const item of stmItems) {
-              // Match by content hash since STM doesn't have IDs
-              const itemId = `stm-${item.content.slice(0, 20)}-${item.timestamp}`;
-              if (p.memory_id === itemId || p.memory_id === item.timestamp || item.content.includes(p.memory_id)) {
-                if (p.importance !== undefined) {
-                  item.importance = p.importance;
-                }
-                if (p.categories) {
-                  item.categories = p.categories;
-                  item.category = p.categories[0];
-                }
-                found = true;
-                updatedItem = item;
+              if (item.id === p.memory_id || item.content.includes(p.memory_id)) {
+                targetItem = item;
                 break;
               }
             }
 
-            if (found && updatedItem) {
-              const stmPath = join(homedir(), ".openclaw", "workspace", "memory", "stm.json");
-              await writeFile(stmPath, JSON.stringify(stmData, null, 2));
-
-              const cats = updatedItem.categories ?? (updatedItem.category ? [updatedItem.category] : ["general"]);
-              return {
-                content: [{
-                  type: "text",
-                  text: `Updated memory: importance=${updatedItem.importance.toFixed(1)}, categories=[${cats.join(", ")}]`,
-                }],
-                details: { updated: true, importance: updatedItem.importance, categories: cats },
-              };
+            if (targetItem && targetItem.id) {
+              // Update directly in brain.db
+              const updated = await bridge.updateSTM(targetItem.id, p.importance, p.categories);
+              if (updated) {
+                const cats = p.categories ?? targetItem.categories ?? ["general"];
+                const imp = p.importance ?? targetItem.importance;
+                return {
+                  content: [{
+                    type: "text",
+                    text: `Updated memory: importance=${imp.toFixed(1)}, categories=[${cats.join(", ")}]`,
+                  }],
+                  details: { updated: true, importance: imp, categories: cats },
+                };
+              }
             }
 
             return {
@@ -1165,55 +1155,47 @@ const cortexPlugin: OpenClawPlugin = {
               };
             }
 
-            // Load and update STM
-            const stmData = await bridge.loadSTMDirect();
-            const stmItems = stmData.short_term_memory;
-            let found = false;
-            let updatedItem: STMItem | null = null;
+            // Find the memory in brain.db
+            const stmItems = await bridge.getRecentSTM(config.stmCapacity);
+            let targetItem: STMItem | null = null;
 
             for (const item of stmItems) {
-              // Match by content snippet or timestamp
-              if (p.memory_id === item.timestamp || item.content.includes(p.memory_id)) {
-                const oldContent = item.content;
-
-                if (p.replace) {
-                  item.content = p.replace;
-                } else if (p.append) {
-                  item.content = `${item.content}\n\n[Updated ${new Date().toISOString()}]: ${p.append}`;
-                }
-
-                // Update timestamp to reflect modification
-                item.timestamp = new Date().toISOString();
-
-                found = true;
-                updatedItem = item;
-
-                // If content changed significantly, re-embed
-                if (oldContent !== item.content) {
-                  const daemonAvailable = await bridge.isEmbeddingsDaemonAvailable();
-                  if (daemonAvailable) {
-                    const cats = item.categories ?? (item.category ? [item.category] : ["general"]);
-                    await bridge.storeMemoryFast(item.content, {
-                      categories: cats,
-                      importance: item.importance,
-                    });
-                  }
-                }
+              if (item.id === p.memory_id || item.content.includes(p.memory_id)) {
+                targetItem = item;
                 break;
               }
             }
 
-            if (found && updatedItem) {
-              const stmPath = join(homedir(), ".openclaw", "workspace", "memory", "stm.json");
-              await writeFile(stmPath, JSON.stringify(stmData, null, 2));
+            if (targetItem && targetItem.id) {
+              let newContent: string;
+              if (p.replace) {
+                newContent = p.replace;
+              } else {
+                newContent = `${targetItem.content}\n\n[Updated ${new Date().toISOString()}]: ${p.append}`;
+              }
 
-              return {
-                content: [{
-                  type: "text",
-                  text: `Memory ${p.replace ? "replaced" : "appended"}: ${updatedItem.content.slice(0, 100)}...`,
-                }],
-                details: { action: p.replace ? "replace" : "append", content_length: updatedItem.content.length },
-              };
+              // Edit directly in brain.db
+              const edited = await bridge.editSTM(targetItem.id, newContent);
+
+              if (edited) {
+                // Re-embed if content changed
+                const daemonAvailable = await bridge.isEmbeddingsDaemonAvailable();
+                if (daemonAvailable) {
+                  const cats = targetItem.categories ?? ["general"];
+                  await bridge.storeMemoryFast(newContent, {
+                    categories: cats,
+                    importance: targetItem.importance,
+                  });
+                }
+
+                return {
+                  content: [{
+                    type: "text",
+                    text: `Memory ${p.replace ? "replaced" : "appended"}: ${newContent.slice(0, 100)}...`,
+                  }],
+                  details: { action: p.replace ? "replace" : "append", content_length: newContent.length },
+                };
+              }
             }
 
             return {
@@ -1262,34 +1244,31 @@ const cortexPlugin: OpenClawPlugin = {
               };
             }
 
-            // Load and update STM
-            const stmData = await bridge.loadSTMDirect();
-            const stmItems = stmData.short_term_memory;
-            let found = false;
-            let oldCategories: string[] = [];
+            // Find the memory in brain.db
+            const stmItems = await bridge.getRecentSTM(config.stmCapacity);
+            let targetItem: STMItem | null = null;
 
             for (const item of stmItems) {
-              // Match by content snippet or timestamp
-              if (p.memory_id === item.timestamp || item.content.includes(p.memory_id)) {
-                oldCategories = item.categories ?? (item.category ? [item.category] : ["general"]);
-                item.categories = p.to_categories;
-                item.category = p.to_categories[0];
-                found = true;
+              if (item.id === p.memory_id || item.content.includes(p.memory_id)) {
+                targetItem = item;
                 break;
               }
             }
 
-            if (found) {
-              const stmPath = join(homedir(), ".openclaw", "workspace", "memory", "stm.json");
-              await writeFile(stmPath, JSON.stringify(stmData, null, 2));
+            if (targetItem && targetItem.id) {
+              const oldCategories = targetItem.categories ?? ["general"];
+              // Update categories directly in brain.db
+              const updated = await bridge.updateSTM(targetItem.id, undefined, p.to_categories);
 
-              return {
-                content: [{
-                  type: "text",
-                  text: `Moved memory from [${oldCategories.join(", ")}] to [${p.to_categories.join(", ")}]`,
-                }],
-                details: { from_categories: oldCategories, to_categories: p.to_categories },
-              };
+              if (updated) {
+                return {
+                  content: [{
+                    type: "text",
+                    text: `Moved memory from [${oldCategories.join(", ")}] to [${p.to_categories.join(", ")}]`,
+                  }],
+                  details: { from_categories: oldCategories, to_categories: p.to_categories },
+                };
+              }
             }
 
             return {

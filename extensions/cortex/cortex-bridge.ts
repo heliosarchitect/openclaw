@@ -1314,6 +1314,23 @@ print(result or "OK")
   /**
    * Load STM directly from JSON file
    */
+  async editSTM(memoryId: string, newContent: string): Promise<boolean> {
+    const contentJson = JSON.stringify(newContent);
+    const code = `
+import json
+import sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from brain import UnifiedBrain
+b = UnifiedBrain()
+result = b.edit_stm('${memoryId}', ${contentJson})
+print(json.dumps(result))
+`;
+    const result = await this.runPython(code);
+    this.stmCache = null;
+    this.stmCacheTime = 0;
+    return result === true;
+  }
+
   async updateSTM(memoryId: string, importance?: number, categories?: string[]): Promise<boolean> {
     const impArg = importance !== undefined ? String(importance) : "None";
     const catArg = categories ? JSON.stringify(categories) : "None";
