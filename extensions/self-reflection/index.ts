@@ -65,8 +65,8 @@ async function loadSTM(): Promise<STMItem[]> {
   try {
     const response = await fetch("http://localhost:8031/stm?limit=100");
     if (response.ok) {
-      const data = await response.json() as STMItem[];
-      return data || [];
+      const data = await response.json() as { entries: STMItem[] };
+      return data.entries || [];
     }
     return [];
   } catch {
