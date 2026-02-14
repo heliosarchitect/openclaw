@@ -286,48 +286,31 @@ const conversationSummarizerPlugin = {
         // Format for storage
         const content = formatSummaryForStorage(summary);
 
-        // Store via Cortex bridge (if available) or log
-        // We'll use the cortex_add tool indirectly by storing to the STM file
-        const stmPath = `${process.env.HOME}/.openclaw/workspace/memory/stm.json`;
-        const fs = await import("node:fs/promises");
-
+        // Store via brain.db REST API (port 8031)
         try {
-          const stmData = await fs.readFile(stmPath, "utf-8");
-          const stm = JSON.parse(stmData) as {
-            short_term_memory: Array<{
-              content: string;
-              timestamp: string;
-              category: string;
-              importance: number;
-              access_count: number;
-            }>;
-            capacity: number;
-          };
-
-          // Add summary to STM
-          stm.short_term_memory.unshift({
-            content: content.slice(0, 500),
-            timestamp: new Date().toISOString(),
-            category: "meta",
-            importance,
-            access_count: 0,
+          const response = await fetch("http://localhost:8031/remember", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              content: content.slice(0, 500),
+              categories: ["meta"],
+              importance,
+              source: "conversation-summarizer",
+            }),
           });
 
-          // Trim to capacity
-          if (stm.short_term_memory.length > stm.capacity) {
-            stm.short_term_memory = stm.short_term_memory.slice(0, stm.capacity);
+          if (response.ok) {
+            api.logger.info(
+              `Conversation summarized: ${summary.decisions.length} decisions, ` +
+              `${summary.insights.length} insights, ${summary.actions.length} actions ` +
+              `(importance: ${importance.toFixed(1)})`
+            );
+          } else {
+            api.logger.debug?.(`brain_api returned ${response.status}`);
           }
-
-          await fs.writeFile(stmPath, JSON.stringify(stm, null, 2));
-
-          api.logger.info(
-            `Conversation summarized: ${summary.decisions.length} decisions, ` +
-            `${summary.insights.length} insights, ${summary.actions.length} actions ` +
-            `(importance: ${importance.toFixed(1)})`
-          );
         } catch (err) {
-          // STM file doesn't exist yet, that's OK
-          api.logger.debug?.(`Could not write to STM: ${err}`);
+          // brain_api not running, that's OK
+          api.logger.debug?.(`Could not store summary via brain_api: ${err}`);
         }
       } catch (err) {
         api.logger.debug?.(`Conversation summary failed: ${err}`);

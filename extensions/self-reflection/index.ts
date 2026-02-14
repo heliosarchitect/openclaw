@@ -59,16 +59,26 @@ const ANALYSIS_PATTERNS = {
 };
 
 /**
- * Load STM items from file
+ * Load STM items from brain.db via REST API
  */
 async function loadSTM(): Promise<STMItem[]> {
-  const stmPath = join(homedir(), ".openclaw", "workspace", "memory", "stm.json");
   try {
-    const data = await readFile(stmPath, "utf-8");
-    const stm = JSON.parse(data) as { short_term_memory: STMItem[] };
-    return stm.short_term_memory || [];
-  } catch {
+    const response = await fetch("http://localhost:8031/stm?limit=100");
+    if (response.ok) {
+      const data = await response.json() as STMItem[];
+      return data || [];
+    }
     return [];
+  } catch {
+    // brain_api not running — try stm.json as fallback
+    const stmPath = join(homedir(), ".openclaw", "workspace", "memory", "stm.json");
+    try {
+      const data = await readFile(stmPath, "utf-8");
+      const stm = JSON.parse(data) as { short_term_memory: STMItem[] };
+      return stm.short_term_memory || [];
+    } catch {
+      return [];
+    }
   }
 }
 
@@ -312,39 +322,27 @@ function formatReflection(analysis: ReflectionAnalysis): string {
  * Store reflection in Cortex
  */
 async function storeReflection(analysis: ReflectionAnalysis): Promise<void> {
-  const stmPath = join(homedir(), ".openclaw", "workspace", "memory", "stm.json");
+  // Create summary content
+  const content = [
+    `[Self-Reflection ${analysis.period}] ${analysis.timestamp}`,
+    `Insights: ${analysis.insights.join("; ")}`,
+    `Recommendations: ${analysis.recommendations.join("; ")}`,
+  ].join(" | ").slice(0, 500);
 
   try {
-    const data = await readFile(stmPath, "utf-8");
-    const stm = JSON.parse(data) as {
-      short_term_memory: STMItem[];
-      capacity: number;
-    };
-
-    // Create summary content
-    const content = [
-      `[Self-Reflection ${analysis.period}] ${analysis.timestamp}`,
-      `Insights: ${analysis.insights.join("; ")}`,
-      `Recommendations: ${analysis.recommendations.join("; ")}`,
-    ].join(" | ").slice(0, 500);
-
-    // Add to STM with high importance
-    stm.short_term_memory.unshift({
-      content,
-      timestamp: analysis.timestamp,
-      category: "reflection",
-      importance: 2.5,
-      access_count: 0,
+    // Store via brain.db REST API
+    await fetch("http://localhost:8031/remember", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content,
+        categories: ["reflection", "meta"],
+        importance: 2.5,
+        source: "self-reflection",
+      }),
     });
-
-    // Trim to capacity
-    if (stm.short_term_memory.length > stm.capacity) {
-      stm.short_term_memory = stm.short_term_memory.slice(0, stm.capacity);
-    }
-
-    await writeFile(stmPath, JSON.stringify(stm, null, 2));
   } catch {
-    // STM doesn't exist, that's OK
+    // brain_api not running, that's OK
   }
 }
 
