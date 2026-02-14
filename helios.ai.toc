@@ -1,0 +1,93 @@
+# Helios — Documentation TOC
+## Source Files (Core)
+- src/gateway/ — OpenClaw gateway server implementation
+- src/agents/ — Agent management and spawning logic  
+- src/memory/ — Memory system integration (Cortex, working memory)
+- src/tools/ — MCP tool implementations (browser, nodes, synapse, etc.)
+- src/channels/ — Communication channel implementations
+- src/models/ — LLM model integration and failover
+- src/sessions/ — Agent session management
+- src/skills/ — Skill system for extensibility
+
+## Extensions (Helios-Specific)
+- extensions/synapse/ — Inter-agent messaging system
+- extensions/cortex/ — Long-term memory and knowledge management
+- extensions/atoms/ — Causal reasoning and atomic knowledge
+- extensions/working-memory/ — Episodic memory management  
+- extensions/temporal/ — Time-based reasoning and patterns
+- extensions/browser/ — Enhanced browser automation
+- extensions/canvas/ — Node canvas rendering
+- extensions/nodes/ — Multi-device control and monitoring
+- extensions/lbf/ — Enterprise task board integration
+- extensions/message/ — Advanced messaging capabilities
+
+## Configuration
+- .env — Environment variables and API keys
+- package.json — Node.js dependencies and scripts
+- tsconfig.json — TypeScript compilation settings
+- docker-compose.yml — Container orchestration
+- pnpm-workspace.yaml — Monorepo workspace configuration
+
+## Scripts
+- scripts/build.mjs — Build system for extensions and core
+- scripts/test.mjs — Test runner for unit and integration tests
+- scripts/deploy.mjs — Deployment automation
+- openclaw.mjs — Main entry point and CLI
+
+## UI Components
+- ui/gateway/ — Web-based gateway management interface
+- ui/chat/ — Chat interface components
+- ui/canvas/ — Canvas rendering UI
+- ui/settings/ — Configuration management UI
+
+## Documentation
+- README.md — Main project overview and setup
+- CHANGELOG.md — Version history and breaking changes
+- CONTRIBUTING.md — Development guidelines
+- SECURITY.md — Security policies and reporting
+- AGENTS.md — Agent configuration and usage guide
+- docs/ — Comprehensive documentation directory
+  - docs/concepts/ — Core concept explanations
+  - docs/start/ — Getting started guides
+  - docs/install/ — Installation instructions
+  - docs/channels/ — Channel setup guides
+  - docs/skills/ — Skill development
+  - docs/api/ — API documentation
+
+## Test Suite
+- test/unit/ — Unit tests for core functionality
+- test/integration/ — Integration tests for system components
+- test/e2e/ — End-to-end testing
+- vitest.config.ts — Test framework configuration
+
+## Skills
+- skills/web-search/ — Web search capabilities
+- skills/code-review/ — Code analysis and review
+- skills/data-analysis/ — Data processing and visualization
+- skills/content-creation/ — Content generation tools
+- skills/automation/ — Task automation workflows
+
+## Assets
+- assets/icons/ — UI icons and imagery
+- assets/audio/ — Audio assets for TTS/voice
+- assets/templates/ — Template files
+
+## Packages (Monorepo)
+- packages/core/ — Core OpenClaw functionality
+- packages/gateway/ — Gateway server package
+- packages/tools/ — Tool implementations
+- packages/channels/ — Channel packages
+- packages/ui/ — UI component packages
+
+## Vendor Dependencies
+- vendor/signal/ — Signal messaging integration
+- vendor/browser/ — Browser automation libraries
+- node_modules/ — NPM package dependencies
+
+## Development Tools
+- .github/ — GitHub workflows and templates
+- .pre-commit-config.yaml — Pre-commit hooks
+- .secrets.baseline — Security baseline
+- .detect-secrets.cfg — Secret detection configuration
+- patches/ — NPM package patches
+- git-hooks/ — Git hook scripts

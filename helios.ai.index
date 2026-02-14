@@ -1,0 +1,117 @@
+# Helios — Searchable Index
+## Features (by version)
+v0.40+: Helios extensions layer, SYNAPSE messaging, Cortex integration
+v0.39: Inter-agent communication, message threading
+v0.38: Long-term memory system, embedding support
+v0.37: Canvas rendering, visual output capabilities  
+v0.36: Multi-node support, device pairing
+v0.35: Enhanced browser automation, Chrome extension
+v0.34: Skill system expansion, custom tool development
+
+## Log Signatures
+PATTERN: Gateway started | GREP: "OpenClaw.*gateway.*started.*port"
+PATTERN: Extension loaded | GREP: "Extension.*loaded.*helios"
+PATTERN: SYNAPSE active | GREP: "synapse.*message.*sent|received"
+PATTERN: Cortex connected | GREP: "cortex.*memory.*initialized"
+PATTERN: Canvas rendered | GREP: "canvas.*rendered.*node"
+PATTERN: Browser session | GREP: "browser.*session.*chrome|openclaw"
+PATTERN: Node paired | GREP: "node.*paired.*device"
+PATTERN: Skill activated | GREP: "skill.*activated.*workspace"
+PATTERN: Memory stored | GREP: "memory.*stored.*importance"
+PATTERN: Agent spawned | GREP: "agent.*spawned.*session.*subagent"
+
+## API Endpoints
+Gateway:
+- GET /api/v1/status — Gateway health check
+- POST /api/v1/chat — Chat interface endpoint  
+- GET /api/v1/sessions — Active session list
+- POST /api/v1/agents/spawn — Spawn subagent
+- GET /api/v1/memory/stats — Memory system statistics
+- WebSocket /ws — Real-time communication
+
+MCP Tools:
+- read/write/edit — File operations
+- exec/process — Shell command execution  
+- browser — Web automation and control
+- canvas — Visual rendering and UI
+- nodes — Multi-device management
+- message — Channel communication
+- synapse — Inter-agent messaging
+- cortex_* — Memory operations
+- atom_* — Causal reasoning
+- working_memory — Episodic memory
+
+## Configuration Keys
+OPENCLAW_API_KEY: Gateway authentication
+ANTHROPIC_API_KEY: Claude model access
+OPENAI_API_KEY: OpenAI model access
+BRAIN_DB_PATH: Unified memory database location
+EMBEDDINGS_URL: Semantic search service
+GATEWAY_PORT: Gateway server port (default: 3000)
+NODE_ENV: Environment (development/production)
+SKILLS_PATH: Custom skills directory
+WORKSPACE_PATH: Agent workspace location
+
+## Behavioral Markers  
+MARKER: extensions/ directory >35 files indicates full Helios setup
+MARKER: HELIOS_VISION.md presence indicates roadmap planning
+MARKER: brain.db file indicates unified memory system
+MARKER: Multiple agent sessions indicates subagent usage
+MARKER: Canvas snapshots indicate visual AI capabilities
+MARKER: Signal/WhatsApp logs indicate channel activity
+MARKER: .env file with multiple API keys indicates production setup
+MARKER: Docker containers running indicates containerized deployment
+MARKER: pnpm-lock.yaml indicates pnpm package management
+MARKER: dist/ directory size indicates build output
+
+## Extension Loading Order
+1. Core tools (read, write, exec)
+2. Memory systems (cortex, working-memory, atoms)
+3. Communication (synapse, message, channels)  
+4. Automation (browser, canvas, nodes)
+5. Domain-specific (lbf, web-search, image)
+6. Custom skills from workspace/skills/
+
+## Critical Operations
+# Start gateway
+openclaw gateway start --port 3000
+
+# Check system status  
+openclaw status --verbose
+
+# Restart with extensions
+openclaw gateway restart --load-extensions
+
+# Memory system stats
+openclaw exec "cortex_stats"
+
+# Browser session debug
+openclaw browser status --profile chrome
+
+# Agent session list
+openclaw sessions list --active
+
+# Extension health check
+ls extensions/ | wc -l && grep -r "export.*Tool" extensions/*/index.ts
+
+# Database integrity
+sqlite3 ~/.openclaw/workspace/memory/brain.db "PRAGMA integrity_check"
+
+## Development Commands
+# Build all extensions
+pnpm build
+
+# Run tests
+pnpm test
+
+# Type checking
+pnpm type-check
+
+# Lint and format
+pnpm lint && pnpm format
+
+# Extension development
+pnpm dev --watch extensions/
+
+# Deploy to production
+pnpm deploy --target production

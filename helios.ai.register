@@ -1,0 +1,47 @@
+# Helios — AI Version Register
+CURRENT VERSION: OpenClaw 0.40+ with Helios Extensions
+## Active Features
+FEATURE: Helios Extensions Layer (v0.40+)
+  SIGNATURE: extensions/ directory with 35+ custom extensions, HELIOS_VISION.md present
+  FAILURE MODE: Extension loading failures, Node.js dependency conflicts
+  ROLLBACK: Disable extensions in gateway config, use vanilla OpenClaw
+
+FEATURE: SYNAPSE Inter-Agent Messaging (v0.39+)
+  SIGNATURE: SYNAPSE_UPGRADE.md present, agent-to-agent messaging tools
+  FAILURE MODE: Message delivery failures, thread ID conflicts
+  ROLLBACK: Remove synapse tools from MCP server configuration
+
+FEATURE: Cortex Memory Integration (v0.38+)
+  SIGNATURE: Cortex STM tools, memory categorization, embeddings support
+  FAILURE MODE: Memory corruption, embedding service unavailable
+  ROLLBACK: Disable cortex tools, use session-only memory
+
+FEATURE: Canvas Rendering (v0.37+)
+  SIGNATURE: Canvas tool available, node canvas rendering capability
+  FAILURE MODE: Rendering timeouts, node connection failures
+  ROLLBACK: Disable canvas tool, use text-only interaction
+
+FEATURE: Multi-Node Support (v0.36+)
+  SIGNATURE: nodes/ tool for paired device control, camera/screen capture
+  FAILURE MODE: Node pairing failures, gateway token issues
+  ROLLBACK: Remove nodes from tool configuration
+
+## Known Bugs
+BUG: Extension loading order dependencies
+  SYMPTOMS: Some extensions fail to load due to dependency resolution
+  WORKAROUND: Manual extension ordering in package.json
+
+BUG: Memory tool performance
+  SYMPTOMS: Slow cortex operations with large knowledge bases
+  WORKAROUND: Use working memory for active context only
+
+BUG: WebSocket connection stability
+  SYMPTOMS: Intermittent disconnections in browser tool
+  WORKAROUND: Increase connection timeout, enable auto-reconnect
+
+## Bug Fix History
+2026-02-14: Fixed H0 phase implementation, trimmed workspace files
+2026-02-13: Enhanced SYNAPSE integration, improved message threading  
+2026-02-12: Added atomic knowledge tools, causal reasoning capabilities
+2026-02-11: Integrated brain-db unified memory system
+2026-02-10: Enhanced browser control with Chrome extension support
