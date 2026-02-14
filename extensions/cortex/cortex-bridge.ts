@@ -1367,11 +1367,16 @@ print(json.dumps(result))
     return typeof result === "number" ? result : 0;
   }
 
+  /**
+   * @deprecated Use getRecentSTM() for reads, updateSTM()/editSTM()/deleteSTMBatch() for writes.
+   * This reads from stm.json which is empty since brain.db migration.
+   * Kept only for backward compatibility with CLI stats command.
+   */
   async loadSTMDirect(): Promise<{ short_term_memory: STMItem[]; capacity: number; auto_expire_days: number }> {
-    const stmPath = join(this.memoryDir, "stm.json");
+    // Return data from brain.db instead of stale stm.json
     try {
-      const data = await readFile(stmPath, "utf-8");
-      return JSON.parse(data);
+      const items = await this.getRecentSTM(this.stmCapacity);
+      return { short_term_memory: items, capacity: this.stmCapacity, auto_expire_days: 30 };
     } catch {
       return { short_term_memory: [], capacity: this.stmCapacity, auto_expire_days: 30 };
     }
