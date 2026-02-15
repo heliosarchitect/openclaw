@@ -20,7 +20,7 @@ import { Type } from "@sinclair/typebox";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import { existsSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import type { OpenClawPlugin, OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { CortexBridge, type STMItem, estimateTokens } from "./cortex-bridge.js";
@@ -468,7 +468,7 @@ const cortexPlugin: OpenClawPlugin = {
       temporalRerank: rawConfig.temporalRerank ?? true,
       temporalWeight: rawConfig.temporalWeight ?? 0.5,      // Favor recent
       importanceWeight: rawConfig.importanceWeight ?? 0.4,  // Favor important
-      stmCapacity: rawConfig.stmCapacity ?? 50000,          // PHASE 1: 50K items
+      stmCapacity: rawConfig.stmCapacity ?? 500,             // Capped: subprocess serialization limit
       minMatchScore: rawConfig.minMatchScore ?? 0.3,        // Filter low-confidence results
       episodicMemoryTurns: rawConfig.episodicMemoryTurns ?? 20, // Working memory turns to pin
       // PHASE 2: Hot Memory Tier
@@ -2208,84 +2208,23 @@ const cortexPlugin: OpenClawPlugin = {
 
     // =========================================================================
     // SYNAPSE — Inter-agent messaging (Helios <-> Claude Code)
+    // Uses brain.db (UnifiedBrain) for message storage — shared with MCP cortex
     // =========================================================================
-    const synapsePath = join(homedir(), ".openclaw", "workspace", "memory", "synapse.json");
-    const MAX_SYNAPSE_MESSAGES = 200;
 
-    interface SynapseMessage {
-      id: string;
-      from: string;
-      to: string;
-      priority: "info" | "action" | "urgent";
-      subject: string;
-      body: string;
-      status: "unread" | "read" | "acknowledged";
-      timestamp: string;
-      read_by: string[];
-      thread_id: string;
-      ack_body: string | null;
+    // Helper to run SYNAPSE operations via brain.db
+    async function synapseBrainOp(pythonCode: string): Promise<unknown> {
+      const code = `
+import json
+import sys
+sys.path.insert(0, '${bridge["pythonScriptsDir"]}')
+from brain import UnifiedBrain
+b = UnifiedBrain()
+${pythonCode}
+`;
+      return bridge["runPython"](code);
     }
 
-    interface SynapseStore {
-      messages: SynapseMessage[];
-      agents: string[];
-      version: number;
-    }
-
-    function generateSynapseId(): string {
-      return `syn_${randomBytes(6).toString("hex")}`;
-    }
-
-    function generateThreadId(): string {
-      return `thr_${randomBytes(6).toString("hex")}`;
-    }
-
-    function loadSynapse(): SynapseStore {
-      try {
-        const data = JSON.parse(require("node:fs").readFileSync(synapsePath, "utf-8")) as SynapseStore;
-        return data;
-      } catch {
-        return { messages: [], agents: ["helios", "claude-code"], version: 1 };
-      }
-    }
-
-    function saveSynapse(data: SynapseStore): void {
-      const tmpPath = synapsePath + ".tmp";
-      writeFileSync(tmpPath, JSON.stringify(data, null, 2));
-      renameSync(tmpPath, synapsePath);
-    }
-
-    function pruneSynapseMessages(data: SynapseStore): void {
-      if (data.messages.length <= MAX_SYNAPSE_MESSAGES) {
-        return;
-      }
-
-      const unread = data.messages.filter((m) => m.status === "unread");
-      const read = data.messages.filter((m) => m.status === "read");
-      const acked = data.messages.filter((m) => m.status === "acknowledged");
-
-      // Sort oldest first for pruning
-      read.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-      acked.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-
-      let excess = data.messages.length - MAX_SYNAPSE_MESSAGES;
-
-      // Prune acknowledged first, then read. Never prune unread.
-      while (excess > 0 && acked.length > 0) {
-        acked.shift();
-        excess--;
-      }
-      while (excess > 0 && read.length > 0) {
-        read.shift();
-        excess--;
-      }
-
-      data.messages = [...unread, ...read, ...acked].sort((a, b) =>
-        a.timestamp.localeCompare(b.timestamp),
-      );
-    }
-
-    // Tool: synapse - 1 action-discriminated tool with 5 actions
+    // Tool: synapse - 1 action-discriminated tool with 5 actions (brain.db backend)
     api.registerTool(
       {
         name: "synapse",
@@ -2325,43 +2264,36 @@ const cortexPlugin: OpenClawPlugin = {
                 if (!p.to || !p.subject || !p.body) {
                   return { content: [{ type: "text", text: "Error: to, subject, and body are required for send" }], details: { error: "missing params" } };
                 }
-                const priority = (["info", "action", "urgent"].includes(p.priority || "") ? p.priority : "info") as SynapseMessage["priority"];
-                const msg: SynapseMessage = {
-                  id: generateSynapseId(),
-                  from: "helios",
-                  to: p.to,
-                  priority,
-                  subject: p.subject,
-                  body: p.body,
-                  status: "unread",
-                  timestamp: new Date().toISOString(),
-                  read_by: [],
-                  thread_id: p.thread_id || generateThreadId(),
-                  ack_body: null,
-                };
-                const data = loadSynapse();
-                data.messages.push(msg);
-                pruneSynapseMessages(data);
-                saveSynapse(data);
+                const priority = ["info", "action", "urgent"].includes(p.priority || "") ? p.priority : "info";
+                const threadArg = p.thread_id ? JSON.stringify(p.thread_id) : "None";
+                const result = await synapseBrainOp(`
+result = b.send(
+    from_agent="helios",
+    to_agent=${JSON.stringify(p.to)},
+    subject=${JSON.stringify(p.subject)},
+    body=${JSON.stringify(p.body)},
+    priority=${JSON.stringify(priority)},
+    thread_id=${threadArg}
+)
+print(json.dumps(result))
+`);
+                const msg = result as { id: string; thread_id: string };
                 return {
-                  content: [{ type: "text", text: `Sent SYNAPSE message ${msg.id} to ${msg.to} [${msg.priority}]: ${msg.subject}` }],
-                  details: { id: msg.id, thread_id: msg.thread_id, to: msg.to, priority: msg.priority },
+                  content: [{ type: "text", text: `Sent SYNAPSE message ${msg.id} to ${p.to} [${priority}]: ${p.subject}` }],
+                  details: { id: msg.id, thread_id: msg.thread_id, to: p.to, priority },
                 };
               }
               case "inbox": {
                 const agentId = p.agent_id || "helios";
-                const includeRead = p.include_read || false;
-                const data = loadSynapse();
-                let results = data.messages.filter((m) => m.to === agentId || m.to === "all");
-                if (includeRead) {
-                  results = results.filter((m) => m.status !== "acknowledged");
-                } else {
-                  results = results.filter((m) => !m.read_by.includes(agentId));
-                }
-                results.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+                const includeRead = p.include_read ? "True" : "False";
+                const result = await synapseBrainOp(`
+result = b.inbox(${JSON.stringify(agentId)}, include_read=${includeRead})
+print(json.dumps({"agent_id": ${JSON.stringify(agentId)}, "count": len(result), "messages": result}))
+`);
+                const data = result as { agent_id: string; count: number; messages: unknown[] };
                 return {
-                  content: [{ type: "text", text: JSON.stringify({ agent_id: agentId, count: results.length, messages: results }, null, 2) }],
-                  details: { count: results.length },
+                  content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+                  details: { count: data.count },
                 };
               }
               case "read": {
@@ -2369,21 +2301,16 @@ const cortexPlugin: OpenClawPlugin = {
                   return { content: [{ type: "text", text: "Error: message_id is required for read" }], details: { error: "missing message_id" } };
                 }
                 const readerAgent = p.agent_id || "helios";
-                const data = loadSynapse();
-                const msg = data.messages.find((m) => m.id === p.message_id);
-                if (!msg) {
+                const result = await synapseBrainOp(`
+result = b.read_message(${JSON.stringify(p.message_id)}, ${JSON.stringify(readerAgent)})
+print(json.dumps(result))
+`);
+                if (!result) {
                   return { content: [{ type: "text", text: `Error: Message not found: ${p.message_id}` }], details: { error: "not_found" } };
                 }
-                if (!msg.read_by.includes(readerAgent)) {
-                  msg.read_by.push(readerAgent);
-                }
-                if (msg.status === "unread") {
-                  msg.status = "read";
-                }
-                saveSynapse(data);
                 return {
-                  content: [{ type: "text", text: JSON.stringify(msg, null, 2) }],
-                  details: { id: msg.id, status: msg.status },
+                  content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+                  details: { id: p.message_id, status: "read" },
                 };
               }
               case "ack": {
@@ -2391,39 +2318,27 @@ const cortexPlugin: OpenClawPlugin = {
                   return { content: [{ type: "text", text: "Error: message_id is required for ack" }], details: { error: "missing message_id" } };
                 }
                 const ackerAgent = p.agent_id || "helios";
-                const data = loadSynapse();
-                const msg = data.messages.find((m) => m.id === p.message_id);
-                if (!msg) {
-                  return { content: [{ type: "text", text: `Error: Message not found: ${p.message_id}` }], details: { error: "not_found" } };
-                }
-                msg.status = "acknowledged";
-                if (!msg.read_by.includes(ackerAgent)) {
-                  msg.read_by.push(ackerAgent);
-                }
-                if (p.body) {
-                  msg.ack_body = p.body;
-                }
-                saveSynapse(data);
+                const ackBody = p.body ? JSON.stringify(p.body) : "None";
+                const result = await synapseBrainOp(`
+result = b.ack(${JSON.stringify(p.message_id)}, ${JSON.stringify(ackerAgent)}, ${ackBody})
+print(json.dumps(result))
+`);
                 return {
-                  content: [{ type: "text", text: `Acknowledged ${msg.id}: ${msg.subject}` }],
-                  details: { id: msg.id, status: "acknowledged", ack_body: msg.ack_body },
+                  content: [{ type: "text", text: `Acknowledged ${p.message_id}` }],
+                  details: { id: p.message_id, status: "acknowledged" },
                 };
               }
               case "history": {
-                const data = loadSynapse();
-                let results = data.messages;
-                if (p.agent_id) {
-                  results = results.filter((m) => m.from === p.agent_id || m.to === p.agent_id || m.to === "all");
-                }
-                if (p.thread_id) {
-                  results = results.filter((m) => m.thread_id === p.thread_id);
-                }
-                results.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+                const agentFilter = p.agent_id ? JSON.stringify(p.agent_id) : "None";
+                const threadFilter = p.thread_id ? JSON.stringify(p.thread_id) : "None";
                 const limit = p.limit || 20;
-                results = results.slice(0, limit);
+                const result = await synapseBrainOp(`
+result = b.history(thread_id=${threadFilter}, agent_id=${agentFilter}, limit=${limit})
+print(json.dumps({"count": len(result), "messages": result}))
+`);
                 return {
-                  content: [{ type: "text", text: JSON.stringify({ count: results.length, messages: results }, null, 2) }],
-                  details: { count: results.length },
+                  content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+                  details: { count: (result as { count: number }).count },
                 };
               }
               default:

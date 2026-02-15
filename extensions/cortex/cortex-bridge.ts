@@ -1139,14 +1139,9 @@ print(json.dumps(result))
       categories: item.categories ?? (item.category ? [item.category] : ["general"]),
     }));
 
-    // Update cache
-    if (!category) {
-      // Only cache full results
-      const stmData = await this.loadSTMDirect();
-      this.stmCache = stmData.short_term_memory.map(item => ({
-        ...item,
-        categories: item.categories ?? (item.category ? [item.category] : ["general"]),
-      }));
+    // Update cache directly from results (avoid circular call to loadSTMDirect)
+    if (!category && limit >= 100) {
+      this.stmCache = normalizedResult;
       this.stmCacheTime = Date.now();
     }
 
@@ -1374,8 +1369,9 @@ print(json.dumps(result))
    */
   async loadSTMDirect(): Promise<{ short_term_memory: STMItem[]; capacity: number; auto_expire_days: number }> {
     // Return data from brain.db instead of stale stm.json
+    // Cap to 500 to avoid subprocess memory issues (was previously stmCapacity=50000)
     try {
-      const items = await this.getRecentSTM(this.stmCapacity);
+      const items = await this.getRecentSTM(Math.min(this.stmCapacity, 500));
       return { short_term_memory: items, capacity: this.stmCapacity, auto_expire_days: 30 };
     } catch {
       return { short_term_memory: [], capacity: this.stmCapacity, auto_expire_days: 30 };

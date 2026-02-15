@@ -31,7 +31,7 @@ def _get_brain() -> UnifiedBrain:
 def load_stm():
     """Load STM — returns format compatible with old stm.json consumers."""
     b = _get_brain()
-    items = b.get_stm(limit=50000)  # Get all (capacity handled by caller)
+    items = b.get_stm(limit=500)  # Capped to prevent memory issues in subprocess
     return {
         "short_term_memory": [_brain_to_stm_item(i) for i in items],
         "capacity": 50000,
@@ -74,6 +74,9 @@ def add_to_stm(content, category=None, categories=None, importance=1.0):
 def get_recent(limit=10, category=None, categories=None):
     """Get recent STM items from brain.db."""
     b = _get_brain()
+
+    # Cap limit to avoid memory issues from subprocess serialization
+    limit = min(limit, 500)
 
     # Determine filter category (brain.db supports single category filter)
     filter_cat = None

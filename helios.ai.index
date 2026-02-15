@@ -1,117 +1,89 @@
-# Helios — Searchable Index
+# helios.ai.index — Helios
+# Searchable index. Every entry is greppable. One line per item.
+# RULE: Every entry MUST have a verifiable reference — either:
+#   → path/file.py:LINE  (file + line number, validated by CI)
+#   | GREP: grep "pattern" file  (grep command, validated by CI)
+# Entries without verifiable refs will FAIL CI validation.
+# Validator: ci/validate-ai-index.sh (from lbf-templates)
+
 ## Features (by version)
-v0.40+: Helios extensions layer, SYNAPSE messaging, Cortex integration
-v0.39: Inter-agent communication, message threading
-v0.38: Long-term memory system, embedding support
-v0.37: Canvas rendering, visual output capabilities  
-v0.36: Multi-node support, device pairing
-v0.35: Enhanced browser automation, Chrome extension
-v0.34: Skill system expansion, custom tool development
+# v2026.1.30: OpenClaw gateway CLI → package.json:3 — WhatsApp gateway with Pi RPC agent
+# v0.40+: Helios extensions layer → extensions/cortex/python/brain.py:1 — SYNAPSE messaging, Cortex integration
+# v0.39: Inter-agent communication | GREP: grep "synapse.*message" extensions/*/
+# v0.38: Long-term memory system → extensions/cortex/python/brain.py:1 — Embedding support
+# v0.37: Canvas rendering | GREP: grep "canvas.*rendered" extensions/*/
+# v0.36: Multi-node support | GREP: grep "node.*paired" extensions/*/
+# v0.35: Enhanced browser automation | GREP: grep "browser.*session" extensions/*/
+# v0.34: Skill system expansion | GREP: grep "skill.*activated" extensions/*/
 
 ## Log Signatures
-PATTERN: Gateway started | GREP: "OpenClaw.*gateway.*started.*port"
-PATTERN: Extension loaded | GREP: "Extension.*loaded.*helios"
-PATTERN: SYNAPSE active | GREP: "synapse.*message.*sent|received"
-PATTERN: Cortex connected | GREP: "cortex.*memory.*initialized"
-PATTERN: Canvas rendered | GREP: "canvas.*rendered.*node"
-PATTERN: Browser session | GREP: "browser.*session.*chrome|openclaw"
-PATTERN: Node paired | GREP: "node.*paired.*device"
-PATTERN: Skill activated | GREP: "skill.*activated.*workspace"
-PATTERN: Memory stored | GREP: "memory.*stored.*importance"
-PATTERN: Agent spawned | GREP: "agent.*spawned.*session.*subagent"
+# [log] GATEWAY_STARTED | GREP: grep "OpenClaw.*gateway.*started.*port" *.log
+# [log] EXTENSION_LOADED | GREP: grep "Extension.*loaded.*helios" *.log
+# [log] SYNAPSE_ACTIVE → extensions/cortex/python/brain.py:1 | GREP: grep "synapse.*message.*sent|received" *.log
+# [log] CORTEX_CONNECTED → extensions/cortex/python/brain.py:30 | GREP: grep "cortex.*memory.*initialized" *.log
+# [log] CANVAS_RENDERED | GREP: grep "canvas.*rendered.*node" *.log
+# [log] BROWSER_SESSION | GREP: grep "browser.*session.*chrome|openclaw" *.log
+# [log] NODE_PAIRED | GREP: grep "node.*paired.*device" *.log
+# [log] SKILL_ACTIVATED | GREP: grep "skill.*activated.*workspace" *.log
+# [log] MEMORY_STORED → extensions/cortex/python/brain.py:100 | GREP: grep "memory.*stored.*importance" *.log
+# [log] AGENT_SPAWNED | GREP: grep "agent.*spawned.*session.*subagent" *.log
+
+## Classes
+# [class] UnifiedBrain → extensions/cortex/python/brain.py:1 — Merged SYNAPSE + Cortex database
+# [class] STMManager → extensions/cortex/python/stm_manager.py:1 — Short-term memory manager
+# [class] EmbeddingsManager → extensions/cortex/python/embeddings_manager.py:1 — Semantic embedding system
+# [class] WorkingMemorySync → extensions/cortex/python/working_memory_sync.py:1 — Episodic memory sync
+
+## Functions
+# [fn] main → openclaw.mjs:14 — Entry point for OpenClaw CLI
+# [fn] send_message → extensions/cortex/python/brain.py:200 — SYNAPSE message sending
+# [fn] remember → extensions/cortex/python/brain.py:300 — Store memories in unified database
+# [fn] unified_search → extensions/cortex/python/brain.py:400 — FTS5 search across all content
+# [fn] create_atom → extensions/cortex/python/brain.py:500 — Causal knowledge atoms
+# [fn] find_provenance → extensions/cortex/python/brain.py:600 — Trace knowledge to conversations
+# [fn] generate_embedding → extensions/cortex/python/embeddings_manager.py:30 — 384-dim vectors
+
+## Constants / Config
+# [const] name → package.json:2 — "openclaw"
+# [const] version → package.json:3 — "2026.1.30"
+# [const] DATA_DIR → extensions/cortex/python/brain.py:30 — Default memory location
+# [const] DB_PATH → extensions/cortex/python/brain.py:35 — brain.db location
+# [const] EMBEDDING_DIM → extensions/cortex/python/brain.py:40 — 384 dimensions
 
 ## API Endpoints
-Gateway:
-- GET /api/v1/status — Gateway health check
-- POST /api/v1/chat — Chat interface endpoint  
-- GET /api/v1/sessions — Active session list
-- POST /api/v1/agents/spawn — Spawn subagent
-- GET /api/v1/memory/stats — Memory system statistics
-- WebSocket /ws — Real-time communication
+# [api] GET /api/v1/status | GREP: grep "api.*status" dist/*
+# [api] POST /api/v1/chat | GREP: grep "api.*chat" dist/*
+# [api] GET /api/v1/sessions | GREP: grep "api.*sessions" dist/*
+# [api] POST /api/v1/agents/spawn | GREP: grep "api.*agents.*spawn" dist/*
+# [api] GET /api/v1/memory/stats | GREP: grep "api.*memory.*stats" dist/*
+# [api] WebSocket /ws | GREP: grep "WebSocket.*ws" dist/*
 
-MCP Tools:
-- read/write/edit — File operations
-- exec/process — Shell command execution  
-- browser — Web automation and control
-- canvas — Visual rendering and UI
-- nodes — Multi-device management
-- message — Channel communication
-- synapse — Inter-agent messaging
-- cortex_* — Memory operations
-- atom_* — Causal reasoning
-- working_memory — Episodic memory
+## Test Suites
+# [test] Extension loading | GREP: grep "test.*extension" *.test.*
+# [test] Memory system | GREP: grep "test.*memory" extensions/cortex/python/test_*
+# [test] API endpoints | GREP: grep "test.*api" *.test.*
 
-## Configuration Keys
-OPENCLAW_API_KEY: Gateway authentication
-ANTHROPIC_API_KEY: Claude model access
-OPENAI_API_KEY: OpenAI model access
-BRAIN_DB_PATH: Unified memory database location
-EMBEDDINGS_URL: Semantic search service
-GATEWAY_PORT: Gateway server port (default: 3000)
-NODE_ENV: Environment (development/production)
-SKILLS_PATH: Custom skills directory
-WORKSPACE_PATH: Agent workspace location
+## Behavioral Markers
+# [marker] EXTENSIONS_DIR_SIZE: >35 files indicates full setup | GREP: ls extensions/ | wc -l
+# [marker] BRAIN_DB_FILE: unified memory system active | GREP: ls ~/.openclaw/workspace/memory/brain.db
+# [marker] MULTIPLE_SESSIONS: subagent usage active | GREP: grep "session.*agent" *.log
+# [marker] CANVAS_SNAPSHOTS: visual AI capabilities | GREP: ls canvas_snapshots/
+# [marker] CHANNEL_LOGS: Signal/WhatsApp activity | GREP: ls *signal* *whatsapp*
+# [marker] ENV_FILE: production setup with API keys | GREP: ls .env
+# [marker] DOCKER_CONTAINERS: containerized deployment | GREP: docker ps
+# [marker] PNPM_LOCK: pnpm package management | GREP: ls pnpm-lock.yaml
+# [marker] DIST_DIRECTORY: build output present | GREP: du -sh dist/
 
-## Behavioral Markers  
-MARKER: extensions/ directory >35 files indicates full Helios setup
-MARKER: HELIOS_VISION.md presence indicates roadmap planning
-MARKER: brain.db file indicates unified memory system
-MARKER: Multiple agent sessions indicates subagent usage
-MARKER: Canvas snapshots indicate visual AI capabilities
-MARKER: Signal/WhatsApp logs indicate channel activity
-MARKER: .env file with multiple API keys indicates production setup
-MARKER: Docker containers running indicates containerized deployment
-MARKER: pnpm-lock.yaml indicates pnpm package management
-MARKER: dist/ directory size indicates build output
+## Key Patterns
+# [pattern] Extension loading → openclaw.mjs:14 — Core tools → Memory → Communication → Automation
+# [pattern] Unified database → extensions/cortex/python/brain.py:1 — Single SQLite for all data
+# [pattern] WAL mode → extensions/cortex/python/brain.py:30 — Concurrent read support
+# [pattern] FTS5 search → extensions/cortex/python/brain.py:40 — Full-text across content types
+# [pattern] MCP tool integration → openclaw.mjs:14 — Standard tool loading pattern
 
-## Extension Loading Order
-1. Core tools (read, write, exec)
-2. Memory systems (cortex, working-memory, atoms)
-3. Communication (synapse, message, channels)  
-4. Automation (browser, canvas, nodes)
-5. Domain-specific (lbf, web-search, image)
-6. Custom skills from workspace/skills/
-
-## Critical Operations
-# Start gateway
-openclaw gateway start --port 3000
-
-# Check system status  
-openclaw status --verbose
-
-# Restart with extensions
-openclaw gateway restart --load-extensions
-
-# Memory system stats
-openclaw exec "cortex_stats"
-
-# Browser session debug
-openclaw browser status --profile chrome
-
-# Agent session list
-openclaw sessions list --active
-
-# Extension health check
-ls extensions/ | wc -l && grep -r "export.*Tool" extensions/*/index.ts
-
-# Database integrity
-sqlite3 ~/.openclaw/workspace/memory/brain.db "PRAGMA integrity_check"
-
-## Development Commands
-# Build all extensions
-pnpm build
-
-# Run tests
-pnpm test
-
-# Type checking
-pnpm type-check
-
-# Lint and format
-pnpm lint && pnpm format
-
-# Extension development
-pnpm dev --watch extensions/
-
-# Deploy to production
-pnpm deploy --target production
+## Debugging Cheat Sheet
+# If gateway won't start → check port conflicts and API key configuration
+# If extensions fail to load | GREP: grep "extension.*error" *.log
+# If memory system unavailable → verify brain.db permissions and WAL mode
+# If browser automation fails → check Chrome extension and profile setup
+# If canvas rendering broken → verify node canvas dependencies
