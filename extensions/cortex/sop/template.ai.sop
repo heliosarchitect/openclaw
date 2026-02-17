@@ -36,6 +36,17 @@ commands:
   test: ""                    # How to run tests
   logs: ""                    # How to view logs
 
+credentials:
+  # API keys, tokens, secrets. Check these BEFORE asking the user.
+  # - name: Human-readable name
+  #   env: ENV_VARIABLE_NAME
+  #   store: 1password | env | dotenv | vault
+  #   vault: "op://vault/item/field" (if 1password)
+  #   dotenv: "/path/to/.env" (if dotenv)
+  #   required: true
+  #   check: "echo $ENV_VAR | head -c4"
+  #   notes: "How to obtain if missing"
+
 gotchas:
   # Hard-won lessons. Things that broke before.
   # - id: gotcha-id

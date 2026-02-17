@@ -85,6 +85,22 @@ gotchas:
     learned: string # Date learned (ISO 8601)
 ```
 
+### `credentials`
+
+Secrets, API keys, and tokens required for operation. The agent checks these BEFORE asking the user.
+
+```yaml
+credentials:
+  - name: string # Human-readable name (e.g., "Cloudflare API Token")
+    env: string # Environment variable name (e.g., CLOUDFLARE_API_TOKEN)
+    store: string # Where it lives: 1password | env | dotenv | vault
+    vault: string # 1Password vault path (if store=1password)
+    dotenv: string # Path to .env file (if store=dotenv)
+    required: bool # Is this mandatory for operation?
+    check: string # Command to verify it's set (e.g., "echo $CLOUDFLARE_API_TOKEN | head -c4")
+    notes: string # How to obtain if missing
+```
+
 ## Optional Sections
 
 ### `dependencies`
