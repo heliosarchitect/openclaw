@@ -2799,8 +2799,9 @@ print(json.dumps({"count": len(result), "messages": result}))
             if (relevantHot.length > 0) {
               const hotContext = relevantHot
                 .map((m) => {
-                  // PHASE 2 IMPROVEMENT #4: Record access on injection
-                  bridge.memoryIndex.hotTier.recordAccess(m.id);
+                  // PHASE 2 IMPROVEMENT #4: Read access count but DON'T record on injection
+                  // Recording on injection creates a feedback loop: hot → injected → access++ → stays hot forever
+                  // Access should only be recorded on explicit retrieval (search, STM query)
                   const accessCount = bridge.memoryIndex.hotTier.getAccessCount(m.id);
 
                   // PHASE 2 IMPROVEMENT #5: Use time delta instead of generic label
@@ -2947,7 +2948,7 @@ print(json.dumps({"count": len(result), "messages": result}))
                       `- [${cat}/${timeDelta}] ${fresh.content.slice(0, config.truncateOldMemoriesTo)}`,
                     );
                     injectedContentKeys.add(fresh.content.slice(0, 100).toLowerCase().trim());
-                    bridge.memoryIndex.hotTier.recordAccess(fresh.id);
+                    // Don't record access on injection — same feedback loop fix as hot tier
                   }
                 }
               }

@@ -168,7 +168,7 @@ export class HotMemoryTier {
   private lastAccess: Map<string, number> = new Map();
   private readonly maxSize: number;
   private readonly decayIntervalMs = 3600000; // 1 hour
-  private readonly decayFactor = 0.9; // Multiply access counts by this every decay interval
+  private readonly decayFactor = 0.8; // Multiply access counts by this every decay interval (was 0.9, too slow)
 
   constructor(maxSize = 100) {
     this.maxSize = maxSize;
