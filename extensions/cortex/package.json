@@ -1,11 +1,18 @@
 {
   "name": "@openclaw/cortex",
-  "version": "2026.2.3",
+  "version": "1.0.0",
   "description": "Cortex core memory system - adds STM, importance scoring, and auto-capture to existing memory_search",
-  "type": "module",
-  "keywords": ["openclaw", "plugin", "memory", "cortex", "stm", "temporal"],
-  "author": "heliosarchitect",
+  "keywords": [
+    "cortex",
+    "memory",
+    "openclaw",
+    "plugin",
+    "stm",
+    "temporal"
+  ],
   "license": "MIT",
+  "author": "heliosarchitect",
+  "type": "module",
   "dependencies": {
     "@sinclair/typebox": "0.34.48"
   },
