@@ -1,0 +1,57 @@
+# {PROJECT_NAME} — AI Standard Operating Procedure
+# Spec: https://github.com/heliosarchitect/helios/extensions/cortex/sop/AI_SOP_SPEC.md
+
+meta:
+  name: ""                    # Human-readable project name
+  version: ""                 # Current semver version
+  repo: ""                    # Absolute path to project root
+  hosts: []                   # Fleet hosts this runs on
+  updated: ""                 # ISO 8601 date
+
+preflight:
+  # Steps to execute BEFORE any action. Mandatory — skip nothing.
+  # - id: unique-step-id
+  #   action: What to do (human-readable)
+  #   command: Exact command to run (optional)
+  #   check: Expected output or condition (optional)
+  #   reason: Why this step matters
+
+hosts:
+  # Per-host connection and environment details.
+  # - name: hostname
+  #   ip: 192.168.x.x
+  #   port: 2222
+  #   user: bonsaihorn
+  #   services: [service1, service2]
+  #   env: "activation command"
+  #   gpu: "GPU model and VRAM"
+  #   gotchas:
+  #     - "Known issue specific to this host"
+
+commands:
+  start: ""                   # How to start the service
+  stop: ""                    # How to stop it
+  status: ""                  # How to check if it's running
+  deploy: ""                  # How to deploy updates
+  test: ""                    # How to run tests
+  logs: ""                    # How to view logs
+
+gotchas:
+  # Hard-won lessons. Things that broke before.
+  # - id: gotcha-id
+  #   description: What goes wrong
+  #   fix: How to fix or avoid it
+  #   learned: 2026-XX-XX
+
+dependencies:
+  # What this project needs from other systems.
+  # - name: dependency-name
+  #   type: service | package | model | hardware
+  #   required: true
+  #   notes: ""
+
+alerts:
+  # Conditions that should trigger notification.
+  # - condition: What to watch for
+  #   severity: critical | warning | info
+  #   action: What to do when triggered
