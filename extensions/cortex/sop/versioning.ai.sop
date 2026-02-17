@@ -1,0 +1,79 @@
+meta:
+  name: LBF Versioning Standard
+  version: "1.0.0"
+  repo: ~/Projects/helios/extensions/cortex/sop
+  hosts: [all]
+  updated: "2026-02-17"
+
+preflight:
+  - id: check-version-consistency
+    action: Before ANY release, verify all version sources match
+    command: |
+      # For each project, check package.json, pyproject.toml, setup.py, and git tags
+      # All must agree. If they don't, fix BEFORE releasing.
+      grep '"version"' package.json 2>/dev/null
+      grep '^version' pyproject.toml 2>/dev/null
+      git tag --sort=-v:refname | head -1
+    reason: "Version mismatches between manifests and tags cause confusion and broken releases"
+
+  - id: check-google-sheet
+    action: After ANY version bump, update the LBF Project Registry Google Sheet
+    reason: "Single source of truth for all project versions. If it's not in the sheet, it didn't happen."
+
+  - id: never-lie-about-completion
+    action: "AUDIT before claiming 'done'. Run the check command, verify output, THEN report."
+    reason: "Matthew caught version mismatches after being told semver was applied everywhere. Never again."
+
+commands:
+  # Standard version bump flow
+  bump-patch: |
+    # 1. Update ALL version sources
+    npm version patch --no-git-tag-version 2>/dev/null  # package.json
+    # Update pyproject.toml manually if it exists
+    # 2. Commit
+    git add -A && git commit -m "chore: bump to vX.Y.Z"
+    # 3. Tag
+    git tag vX.Y.Z
+    # 4. Push
+    git push && git push --tags
+    # 5. Update Google Sheet
+    # 6. Update .ai.sop meta.version
+
+  bump-minor: |
+    # Same as patch but increment minor version
+    # Use for new features
+
+  bump-major: |
+    # Same as patch but increment major version
+    # Use for breaking changes
+
+  audit-all: |
+    for dir in ~/Projects/lbf-* ~/Projects/augur-* ~/Projects/wems* ~/Projects/helios; do
+      [ ! -d "$dir" ] && continue
+      name=$(basename "$dir")
+      pkg=$(grep '"version"' "$dir/package.json" 2>/dev/null | head -1 | sed 's/.*: *"//;s/".*//')
+      pyp=$(grep '^version' "$dir/pyproject.toml" 2>/dev/null | head -1 | sed 's/.*= *"//;s/".*//')
+      tag=$(cd "$dir" && git tag --sort=-v:refname 2>/dev/null | head -1)
+      echo "$name | pkg=$pkg | pyproject=$pyp | tag=$tag"
+    done
+
+gotchas:
+  - id: multi-manifest
+    description: "Some projects have BOTH package.json AND pyproject.toml. Both must match."
+    fix: "Always update ALL manifest files, not just one."
+    learned: "2026-02-17"
+
+  - id: tag-before-assert
+    description: "Don't claim a version exists until it's git-tagged. Commits don't count."
+    fix: "Run 'git tag' to verify before telling Matthew a version is released."
+    learned: "2026-02-17"
+
+  - id: upstream-vs-fork
+    description: "Helios monorepo has upstream OpenClaw date-based tags AND our semver. They coexist."
+    fix: "Our extensions (cortex) use semver. Upstream extensions keep their date format."
+    learned: "2026-02-17"
+
+  - id: sheet-is-truth
+    description: "The Google Sheet is the canonical registry. If it's not updated, the version bump isn't complete."
+    fix: "Add sheet update to every release checklist."
+    learned: "2026-02-17"
