@@ -1,6 +1,34 @@
 {
   "pipeline_version": "1.0.0",
   "active_tasks": [],
-  "completed_tasks": [],
-  "next_task_id": 1
+  "completed_tasks": [
+    {
+      "task_id": "task-001-confidence-scoring",
+      "title": "Confidence scoring for all memories (retroactive scoring of existing)",
+      "phase": "1.2",
+      "started_at": "2026-02-17T20:53:00Z",
+      "completed_at": "2026-02-17T21:15:00Z",
+      "version_released": "cortex-v1.2.0",
+      "commit": "e51ba5ccb",
+      "stages_completed": [
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
+      "artifacts": {
+        "requirements": "pipeline/task-001-confidence-scoring/requirements.md",
+        "design": "pipeline/task-001-confidence-scoring/design.md",
+        "documentation": "pipeline/task-001-confidence-scoring/docs-manifest.md",
+        "build": "pipeline/task-001-confidence-scoring/build-report.md",
+        "security": "pipeline/task-001-confidence-scoring/security-review.md",
+        "test": "pipeline/task-001-confidence-scoring/test-report.md",
+        "deploy": "pipeline/task-001-confidence-scoring/release-notes.md"
+      }
+    }
+  ],
+  "next_task_id": 2
 }

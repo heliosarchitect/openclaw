@@ -77,9 +77,11 @@ export class PreActionHook {
 - Failed knowledge review = tool call rejected
 - Tracking: log all knowledge injections and acknowledgments
 
-### 1.2 Confidence Scoring System
+### 1.2 Confidence Scoring System ✅ COMPLETED (2026-02-17)
 
 **Goal**: Rate memory reliability to prevent acting on stale/wrong information.
+**Status**: Deployed in Cortex v1.2.0 (cortex-v1.2.0)
+**Migration**: `python3 migrate_confidence.py --progress`
 
 **Memory Confidence Factors**:
 
