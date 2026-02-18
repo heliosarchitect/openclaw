@@ -1,6 +1,18 @@
 {
   "pipeline_version": "1.0.0",
-  "active_tasks": [],
+  "active_tasks": [
+    {
+      "task_id": "task-002-metrics-instrumentation",
+      "title": "Metrics Instrumentation + QA Report Template",
+      "description": "Build a tamper-evident metrics collection system for cortex and synapse",
+      "phase": "1.3",
+      "started_at": "2026-02-18T02:27:00Z",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "artifacts": {}
+    }
+  ],
   "completed_tasks": [
     {
       "task_id": "task-001-confidence-scoring",
@@ -30,5 +42,5 @@
       }
     }
   ],
-  "next_task_id": 2
+  "next_task_id": 3
 }

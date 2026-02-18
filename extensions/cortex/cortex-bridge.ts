@@ -898,7 +898,7 @@ export class CortexBridge {
       if (cachedResults.length >= limit) {
         return cachedResults.slice(0, limit).map((r) => ({
           content: r.content,
-          category: r.category,
+          category: r.category ?? null,
           importance: r.importance,
           score: r.score ?? 0.5,
           semantic: 0.5, // Keyword match, not semantic
@@ -936,6 +936,7 @@ export class CortexBridge {
             id: `search-${Date.now()}-${Math.random().toString(36).slice(2)}`,
             content: result.content,
             source: "search",
+            categories: result.category ? [result.category] : [],
             category: result.category,
             timestamp: new Date().toISOString(),
             importance: result.importance,

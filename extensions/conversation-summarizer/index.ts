@@ -56,8 +56,12 @@ function extractText(content: unknown): string {
   }
   if (Array.isArray(content)) {
     return content
-      .filter((block): block is { type: "text"; text: string } =>
-        block && typeof block === "object" && block.type === "text" && typeof block.text === "string"
+      .filter(
+        (block): block is { type: "text"; text: string } =>
+          block &&
+          typeof block === "object" &&
+          block.type === "text" &&
+          typeof block.text === "string",
       )
       .map((block) => block.text)
       .join("\n");
@@ -76,7 +80,10 @@ function matchesCategory(text: string, patterns: RegExp[]): boolean {
  * Extract sentences that match a category
  */
 function extractMatches(text: string, patterns: RegExp[]): string[] {
-  const sentences = text.split(/[.!?\n]+/).map((s) => s.trim()).filter((s) => s.length > 10);
+  const sentences = text
+    .split(/[.!?\n]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 10);
   return sentences.filter((sentence) => matchesCategory(sentence, patterns));
 }
 
@@ -120,7 +127,9 @@ function generateTopicSummary(messages: Array<{ role?: string; content?: unknown
 /**
  * Analyze a conversation and extract structured summary
  */
-function analyzeConversation(messages: Array<{ role?: string; content?: unknown }>): ConversationSummary {
+function analyzeConversation(
+  messages: Array<{ role?: string; content?: unknown }>,
+): ConversationSummary {
   const decisions: string[] = [];
   const insights: string[] = [];
   const actions: string[] = [];
@@ -255,7 +264,9 @@ const conversationSummarizerPlugin = {
 
       // Skip short conversations
       if (messages.length < minMessages) {
-        api.logger.debug?.(`Skipping summary: only ${messages.length} messages (min: ${minMessages})`);
+        api.logger.debug?.(
+          `Skipping summary: only ${messages.length} messages (min: ${minMessages})`,
+        );
         return;
       }
 
@@ -279,7 +290,9 @@ const conversationSummarizerPlugin = {
 
         // Skip low-importance summaries
         if (importance < minImportance) {
-          api.logger.debug?.(`Skipping summary: importance ${importance.toFixed(1)} below threshold ${minImportance}`);
+          api.logger.debug?.(
+            `Skipping summary: importance ${importance.toFixed(1)} below threshold ${minImportance}`,
+          );
           return;
         }
 
@@ -302,8 +315,8 @@ const conversationSummarizerPlugin = {
           if (response.ok) {
             api.logger.info(
               `Conversation summarized: ${summary.decisions.length} decisions, ` +
-              `${summary.insights.length} insights, ${summary.actions.length} actions ` +
-              `(importance: ${importance.toFixed(1)})`
+                `${summary.insights.length} insights, ${summary.actions.length} actions ` +
+                `(importance: ${importance.toFixed(1)})`,
             );
           } else {
             api.logger.debug?.(`brain_api returned ${response.status}`);
@@ -331,11 +344,13 @@ const conversationSummarizerPlugin = {
             content: [
               {
                 type: "text",
-                text: "Conversation summarization runs automatically at the end of each conversation. " +
+                text:
+                  "Conversation summarization runs automatically at the end of each conversation. " +
                   "Summaries are stored in Cortex STM with category 'meta'. " +
                   "Use cortex_stm with category='meta' to view recent summaries.",
               },
             ],
+            details: { success: true },
           };
         },
       },
