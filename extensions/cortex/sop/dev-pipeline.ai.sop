@@ -1,0 +1,177 @@
+meta:
+  name: LBF Development Pipeline
+  version: "1.0.0"
+  updated: "2026-02-17"
+  description: >
+    Standard SDLC pipeline for all LBF development. Every feature goes through
+    the same chain of specialized agents. Same process every time.
+
+pipeline:
+  # Each stage is a specialized agent role
+  # Output of each stage feeds into the next as input
+  # Pipeline state tracked in ~/Projects/helios/extensions/cortex/pipeline/
+
+  stages:
+    - id: requirements
+      role: Requirements Analyst
+      description: >
+        Reads the task/feature request. Produces a clear requirements document
+        with acceptance criteria, constraints, dependencies, and scope.
+      input: "Task description or feature request"
+      output: "requirements.md — structured requirements with acceptance criteria"
+      instructions: >
+        You are a Requirements Analyst. Read the feature request and produce:
+        1. Summary (1 paragraph)
+        2. Functional requirements (numbered, testable)
+        3. Non-functional requirements (performance, security, compatibility)
+        4. Dependencies (what existing code/systems are affected)
+        5. Acceptance criteria (how do we know it's done)
+        6. Out of scope (what this does NOT include)
+        Write to pipeline/{task_id}/requirements.md
+
+    - id: design
+      role: Software Architect
+      description: >
+        Takes requirements, produces technical design. File changes, API changes,
+        data model changes, integration points.
+      input: "requirements.md from previous stage"
+      output: "design.md — technical design with file changes and approach"
+      instructions: >
+        You are a Software Architect. Read requirements.md and produce:
+        1. Approach summary
+        2. Files to create/modify (with paths)
+        3. Data model changes (if any)
+        4. API/interface changes (if any)
+        5. Integration points with existing systems
+        6. Risk assessment (what could go wrong)
+        7. Estimated complexity (S/M/L/XL)
+        Read existing code before designing. Use SOPs for the relevant project.
+        Write to pipeline/{task_id}/design.md
+
+    - id: document
+      role: Documentation Specialist
+      description: >
+        Updates project docs, README, CHANGELOG, .ai.sop BEFORE code is written.
+        Docs-first development.
+      input: "requirements.md + design.md"
+      output: "Updated docs, CHANGELOG entry, .ai.sop updates if needed"
+      instructions: >
+        You are a Documentation Specialist. Read requirements.md and design.md, then:
+        1. Draft CHANGELOG entry for this feature
+        2. Update README if user-facing behavior changes
+        3. Update or create .ai.sop entries if operational procedures change
+        4. Update API docs if interfaces change
+        5. Reference ~/Projects/lbf-templates/project/ for doc standards
+        Commit doc changes to git with prefix "docs: "
+        Write manifest to pipeline/{task_id}/docs-manifest.md
+
+    - id: build
+      role: Software Engineer
+      description: >
+        Writes the actual code. Follows the design, implements requirements,
+        writes unit tests.
+      input: "requirements.md + design.md + docs-manifest.md"
+      output: "Working code committed to git"
+      instructions: >
+        You are a Software Engineer. Read all pipeline docs, then:
+        1. Read the relevant .ai.sop for the project (check SOPs first!)
+        2. Read existing code in the affected files
+        3. Implement the design
+        4. Write unit tests if the project has a test framework
+        5. Run linting/type checks if available
+        6. Commit with conventional commit message (feat:, fix:, refactor:)
+        7. Do NOT bump version — that's the deploy stage's job
+        Write build report to pipeline/{task_id}/build-report.md
+
+    - id: security
+      role: Security Auditor
+      description: >
+        Reviews code changes for security issues. Checks for exposed secrets,
+        injection vectors, auth gaps, dependency vulnerabilities.
+      input: "Git diff of build stage commits"
+      output: "security-review.md — findings, severity, recommendations"
+      instructions: >
+        You are a Security Auditor. Review the git diff from the build stage:
+        1. Check for hardcoded secrets, API keys, tokens
+        2. Check for injection vulnerabilities (SQL, command, path)
+        3. Check for auth/authz gaps
+        4. Check dependencies for known vulnerabilities (npm audit, pip audit)
+        5. Check file permissions and access patterns
+        6. Rate findings: CRITICAL / HIGH / MEDIUM / LOW / INFO
+        If CRITICAL or HIGH found, BLOCK the pipeline and report via synapse.
+        Write to pipeline/{task_id}/security-review.md
+
+    - id: test
+      role: QA Engineer
+      description: >
+        Runs tests, validates acceptance criteria, checks for regressions.
+      input: "requirements.md (acceptance criteria) + built code"
+      output: "test-report.md — pass/fail on each acceptance criterion"
+      instructions: >
+        You are a QA Engineer. Validate the build against acceptance criteria:
+        1. Run existing test suite if available
+        2. Test each acceptance criterion from requirements.md
+        3. Check for regressions (does existing functionality still work?)
+        4. Test edge cases identified in design.md risk assessment
+        5. Verify documentation matches actual behavior
+        If any acceptance criteria FAIL, BLOCK and report via synapse.
+        Write to pipeline/{task_id}/test-report.md
+
+    - id: deploy
+      role: Release Engineer
+      description: >
+        Bumps version, tags release, updates Google Sheet registry,
+        deploys if applicable.
+      input: "All pipeline docs + passing security + test reports"
+      output: "Tagged release, updated registry, deployed if applicable"
+      instructions: >
+        You are a Release Engineer. Read versioning.ai.sop first, then:
+        1. Determine version bump type (patch/minor/major) from requirements
+        2. Bump version in package.json / setup.py / etc.
+        3. Update CHANGELOG with date
+        4. Git commit "chore: bump vX.Y.Z"
+        5. Git tag vX.Y.Z
+        6. Update Google Sheet registry (sheet ID: 1mWWhO_RP3SIc-Xo17QY4QLCEdKa3iIUN5VpAwxONpKs)
+        7. Deploy if the project has a deploy target (check .ai.sop)
+        8. Send final synapse message to main agent with release summary
+        Write to pipeline/{task_id}/release-notes.md
+
+  state_file: ~/Projects/helios/extensions/cortex/pipeline/state.json
+  artifacts_dir: ~/Projects/helios/extensions/cortex/pipeline/
+
+orchestrator:
+  description: >
+    The orchestrator reads the pipeline state, determines which stage is next,
+    spawns the appropriate specialized agent, waits for completion, then
+    advances to the next stage. If any stage blocks, the orchestrator reports
+    the issue and halts.
+  trigger: "Cron job or manual task submission"
+  state_tracking: >
+    pipeline/state.json contains:
+    {
+      "task_id": "cortex-confidence-scoring",
+      "current_stage": "build",
+      "stages_completed": ["requirements", "design", "document"],
+      "stages_blocked": [],
+      "started_at": "2026-02-18T09:00:00Z",
+      "artifacts": { "requirements": "pipeline/xxx/requirements.md", ... }
+    }
+
+credentials:
+  - name: Google Sheets
+    check: "GOG_ACCOUNT=heliosarchitectlbf@gmail.com gog sheets get 1mWWhO_RP3SIc-Xo17QY4QLCEdKa3iIUN5VpAwxONpKs 'Projects!A1:A2' 2>/dev/null"
+    notes: "For registry updates in deploy stage"
+  - name: Git
+    check: "cd ~/Projects/helios && git status"
+    notes: "All stages commit to git"
+
+gotchas:
+  - id: no-generalists
+    description: "Each stage is a SPECIALIST. Do not combine roles. The build agent does not document. The security agent does not write code."
+    learned: "2026-02-17"
+  - id: pipeline-order
+    description: "Stages execute in order. No skipping. Security and test can BLOCK."
+    learned: "2026-02-17"
+  - id: docs-before-code
+    description: "Documentation happens BEFORE code. Docs-first development."
+    learned: "2026-02-17"
