@@ -1089,7 +1089,10 @@ const cortexPlugin = {
               return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
             };
 
-            const hotTierStats = extStats.memoryIndex.hotTierStats;
+            const hotTierStats = (extStats.memoryIndex as any).hotTierStats || {
+              size: 0,
+              topAccessCounts: [],
+            };
             return {
               content: [
                 {
@@ -1295,17 +1298,17 @@ const cortexPlugin = {
                     0,
                   );
                   const maxImportance = Math.max(...group.map((item) => item.importance || 1));
-                  if (keeper.id) {
+                  if ((keeper as any).id) {
                     // Update keeper in brain.db
                     // Update keeper importance via cortex_update mechanism
-                    await bridge.updateSTM(keeper.id, maxImportance);
+                    await bridge.updateSTM((keeper as any).id, maxImportance);
                   }
                 }
 
                 // Collect IDs to remove
                 for (const item of toRemove) {
-                  if (item.id) {
-                    idsToDelete.push(item.id);
+                  if ((item as any).id) {
+                    idsToDelete.push((item as any).id);
                   }
                 }
               }
