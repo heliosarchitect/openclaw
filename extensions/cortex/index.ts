@@ -457,7 +457,7 @@ function extractYAMLSection(content: string, sectionName: string): string | null
   return result.length > 0 ? result : null;
 }
 
-const cortexPlugin: OpenClawPlugin = {
+const cortexPlugin = {
   id: "cortex",
   name: "Cortex Memory",
   kind: "memory",
@@ -1115,7 +1115,7 @@ const cortexPlugin: OpenClawPlugin = {
 - Top accessed: ${
                     hotTierStats.topAccessCounts
                       .slice(0, 5)
-                      .map((t) => `${t.count.toFixed(1)}`)
+                      .map((t: any) => `${t.count.toFixed(1)}`)
                       .join(", ") || "none"
                   }
 - Categories: ${extStats.memoryIndex.byCategory ? Object.keys(extStats.memoryIndex.byCategory).length : 0}
