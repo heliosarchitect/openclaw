@@ -1,0 +1,137 @@
+meta:
+  name: Cortex Metrics System
+  version: "1.0.0"
+  updated: "2026-02-17"
+  description: >
+    Operational procedures for the tamper-evident metrics collection system.
+    Database maintenance, query patterns, and troubleshooting for metrics.db.
+
+database:
+  location: ~/.openclaw/metrics.db
+  mode: WAL
+  tables: [cortex_metrics, synapse_metrics, pipeline_metrics, sop_events]
+  backup_schedule: daily
+  
+operations:
+  daily_checks:
+    description: "Daily verification of metrics collection system health"
+    commands:
+      - name: "Check database size and growth"
+        cmd: "du -h ~/.openclaw/metrics.db"
+        expected: "< 100MB per week of operation"
+      
+      - name: "Verify WAL mode is active"  
+        cmd: "sqlite3 ~/.openclaw/metrics.db 'PRAGMA journal_mode'"
+        expected: "wal"
+        
+      - name: "Check recent metric activity"
+        cmd: "sqlite3 ~/.openclaw/metrics.db 'SELECT COUNT(*) FROM cortex_metrics WHERE date(timestamp) = date(\"now\")'"
+        expected: "> 0 (metrics being written today)"
+        
+      - name: "Verify SOP event logging"
+        cmd: "sqlite3 ~/.openclaw/metrics.db 'SELECT COUNT(*) FROM sop_events WHERE date(timestamp) = date(\"now\")'" 
+        expected: "> 0 (SOP events logged today)"
+
+  query_patterns:
+    description: "Standard SQL queries for metrics analysis"
+    queries:
+      sop_enforcement_today:
+        purpose: "Count SOP blocks today"
+        sql: "SELECT count(*) FROM sop_events WHERE date(timestamp)=date('now') AND tool_blocked=1"
+        
+      memory_injection_by_tier:
+        purpose: "Memory injections by tier for last 24h"
+        sql: "SELECT context, COUNT(*) as count FROM cortex_metrics WHERE metric_name='memory_injected' AND datetime(timestamp) >= datetime('now', '-24 hours') GROUP BY context ORDER BY count DESC"
+        
+      synapse_activity_summary:
+        purpose: "Inter-agent communication summary"  
+        sql: "SELECT from_agent, to_agent, action, COUNT(*) as messages FROM synapse_metrics WHERE date(timestamp)=date('now') GROUP BY from_agent, to_agent, action ORDER BY messages DESC"
+        
+      pipeline_performance:
+        purpose: "Pipeline stage performance last 7 days"
+        sql: "SELECT stage, AVG(duration_ms) as avg_ms, COUNT(*) as runs FROM pipeline_metrics WHERE datetime(timestamp) >= datetime('now', '-7 days') GROUP BY stage ORDER BY avg_ms DESC"
+        
+      error_rate_analysis:
+        purpose: "Failed pipeline stages last 24h"
+        sql: "SELECT task_id, stage, result FROM pipeline_metrics WHERE datetime(timestamp) >= datetime('now', '-24 hours') AND result != 'pass' ORDER BY timestamp DESC"
+
+  maintenance:
+    description: "Database maintenance procedures"
+    weekly_tasks:
+      - name: "Optimize database"
+        cmd: "sqlite3 ~/.openclaw/metrics.db 'VACUUM; ANALYZE'"
+        frequency: "weekly"
+        
+      - name: "Check index usage"
+        cmd: "sqlite3 ~/.openclaw/metrics.db '.eqp on' 'SELECT * FROM cortex_metrics WHERE date(timestamp)=date(\"now\")'"
+        purpose: "Verify indexes are being used"
+        
+      - name: "Backup metrics database"
+        cmd: "cp ~/.openclaw/metrics.db ~/.openclaw/backups/metrics-$(date +%Y%m%d).db"
+        frequency: "daily"
+
+troubleshooting:
+  database_locked:
+    symptom: "sqlite3.OperationalError: database is locked"
+    diagnosis: "Multiple concurrent writes overwhelming WAL mode"
+    solution: "Check for stuck processes: ps aux | grep metrics_writer"
+    escalation: "If persistent, restart gateway to clear connection pool"
+    
+  missing_metrics:
+    symptom: "No metrics written today (query returns 0)"
+    diagnosis: "Metrics instrumentation not firing or database write failure"
+    solution: "Check gateway logs for metrics_writer errors: tail -f ~/.openclaw/logs/gateway.log | grep metrics"
+    escalation: "Verify metrics_writer.py is accessible and database permissions correct"
+    
+  large_database_size:
+    symptom: "metrics.db > 1GB"  
+    diagnosis: "No data retention policy, accumulating too much historical data"
+    solution: "Run manual cleanup: sqlite3 ~/.openclaw/metrics.db 'DELETE FROM cortex_metrics WHERE datetime(timestamp) < datetime(\"now\", \"-90 days\")'"
+    escalation: "Implement automated data retention policy in next phase"
+
+  slow_queries:
+    symptom: "QA report generation takes > 30 seconds"
+    diagnosis: "Missing indexes or database needs optimization"
+    solution: "Run ANALYZE: sqlite3 ~/.openclaw/metrics.db 'ANALYZE'"
+    escalation: "Add additional indexes for common query patterns"
+
+qa_integration:
+  template_location: "~/Projects/helios/extensions/cortex/sop/qa-report-template.md"
+  report_frequency: "daily via cron"
+  verification_required: "All SQL queries must be copy-pasteable"
+  agent_involvement: "NONE - reports query database directly"
+
+security:
+  tamper_evidence:
+    principle: "Agents cannot modify metrics data"
+    enforcement: "Code writes metrics, not agent logic"
+    verification: "All metrics traceable to instrumented code locations"
+    
+  database_permissions:
+    file_mode: "0640 (owner read/write, group read)"
+    owner: "openclaw-gateway process user"
+    backup_mode: "0600 (owner only)"
+
+alerts:
+  description: "Conditions requiring immediate attention"
+  conditions:
+    - "No metrics written in 4+ hours during normal operation"
+    - "Database size growth > 10MB/day sustained"
+    - "SOP event logging stops (indicates instrumentation failure)"
+    - "Pipeline metrics show >50% failure rate"
+    
+  notification_method: "Gateway logs + daily QA report anomaly detection"
+  escalation_path: "1. Check troubleshooting guide 2. Review gateway logs 3. Manual database inspection"
+
+gotchas:
+  - id: agent_bias
+    description: "Never trust agent-reported metrics. Only database queries."
+    learned: "2026-02-17"
+    
+  - id: concurrent_writes
+    description: "WAL mode required for concurrent write performance"
+    learned: "2026-02-17"
+    
+  - id: timestamp_consistency  
+    description: "All timestamps must be ISO format with timezone"
+    learned: "2026-02-17"

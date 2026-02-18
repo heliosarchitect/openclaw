@@ -97,6 +97,39 @@ Memories are automatically scored for reliability:
 - Routine operations: 0.5+ required
 - Experimental: 0.2+ accepted
 
+## Metrics System (v1.3.0+)
+
+Cortex includes a tamper-evident metrics collection system that tracks memory operations, SOP enforcement, and system performance without agent bias.
+
+**Key Features:**
+
+- **Tamper-evident design**: Code writes metrics, not agents
+- **SQLite database**: ~/.openclaw/metrics.db with WAL mode
+- **Automatic logging**: SOP events, memory injections, synapse communication
+- **QA reporting**: Raw SQL queries for independent verification
+
+**Database Tables:**
+
+- `cortex_metrics`: Memory injection, confidence scoring events
+- `synapse_metrics`: Inter-agent communication and latency
+- `pipeline_metrics`: Development pipeline performance
+- `sop_events`: Standard operating procedure enforcement
+
+**Usage:**
+
+```bash
+# Check metrics collection status
+sqlite3 ~/.openclaw/metrics.db "SELECT COUNT(*) FROM cortex_metrics WHERE date(timestamp) = date('now')"
+
+# Generate QA report
+python3 scripts/generate-qa-report.py --template sop/qa-report-template.md
+
+# Daily maintenance
+sqlite3 ~/.openclaw/metrics.db "PRAGMA optimize; VACUUM;"
+```
+
+See [docs/metrics-architecture.md](docs/metrics-architecture.md) for technical details and [sop/metrics.ai.sop](sop/metrics.ai.sop) for operational procedures.
+
 ## ⛔ Constraints (What NOT To Do)
 
 - **NO direct brain.db writes** — Use UnifiedBrain class only. Direct SQLite writes corrupt FTS5 indexes and break semantic search.

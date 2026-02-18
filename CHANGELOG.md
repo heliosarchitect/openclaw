@@ -2,6 +2,24 @@
 
 Docs: https://docs.openclaw.ai
 
+## v1.3.0 - Metrics Instrumentation (Unreleased)
+
+### Added
+
+- **Cortex/Metrics**: Tamper-evident metrics collection system with SQLite database at `~/.openclaw/metrics.db`. Instrumented code writes metrics directly - agents cannot self-report or bias metrics data.
+- **Cortex/SOP Events**: Automatic logging of all SOP enforcement events in `before_tool_call` hook. Every tool block, acknowledgment, and compliance event recorded with timestamp and context.
+- **Cortex/Memory Tracking**: Memory injection logging in `before_agent_start` hook tracks tier usage, category distribution, and injection counts per agent run.
+- **Synapse/Communication Metrics**: Inter-agent message tracking with latency measurement. Records send/ack/read operations, thread relationships, and agent communication patterns.
+- **Pipeline/Performance Metrics**: Development pipeline stage tracking with duration measurement, success/failure rates, and task completion analysis.
+- **QA/Report Templates**: Standardized QA report template at `extensions/cortex/sop/qa-report-template.md` with raw SQL queries for independent verification. No agent interpretation allowed.
+
+### Infrastructure
+
+- **Database Schema**: Four-table SQLite schema with WAL mode for concurrent access, proper indexing for query performance, and backup/maintenance procedures.
+- **MetricsWriter**: Python-based async metrics writer with connection pooling, retry logic for database lock contention, and type validation.
+- **Operational Procedures**: Complete SOP at `extensions/cortex/sop/metrics.ai.sop` with daily checks, maintenance tasks, troubleshooting guides, and query patterns.
+- **Daily Aggregation**: Cron-ready script for automated daily metrics aggregation that bypasses agent memory and queries database directly.
+
 ## 2026.2.16 (Unreleased)
 
 ### Changes
