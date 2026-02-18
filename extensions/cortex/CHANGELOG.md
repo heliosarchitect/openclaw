@@ -12,7 +12,7 @@ _Every constraint has a scar behind it. Remove only when the underlying system c
 
 ---
 
-## Version 1.2.0 - "Confidence Foundation" (2026-02-17)
+## Version 1.2.0 - "Confidence Foundation" (February 17, 2026)
 
 ### ⛔ New Constraints
 

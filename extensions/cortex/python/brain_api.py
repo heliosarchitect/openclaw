@@ -56,7 +56,7 @@ PORT = int(os.environ.get("BRAIN_API_PORT", 8031))
 app = FastAPI(
     title="Brain API",
     description="REST gateway for UnifiedBrain — SYNAPSE + Cortex on brain.db",
-    version="1.0.0",
+    version="1.2.0",
 )
 
 app.add_middleware(
