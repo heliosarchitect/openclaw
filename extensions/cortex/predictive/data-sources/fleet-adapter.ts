@@ -3,21 +3,21 @@
  * Cortex v2.1.0
  */
 
-import { exec } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
-import { promisify } from 'node:util';
-import type { DataSourceAdapter, SourceReading } from '../types.js';
+import { exec } from "node:child_process";
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { promisify } from "node:util";
+import type { DataSourceAdapter, SourceReading } from "../types.js";
 
 const execAsync = promisify(exec);
-const FLEET_JSON = join(homedir(), '.openclaw/workspace/fleet.json');
+const FLEET_JSON = join(homedir(), ".openclaw/workspace/fleet.json");
 
 // Hardcoded fallback fleet
 const DEFAULT_HOSTS = [
-  { name: 'radio', host: '192.168.10.179' },
-  { name: 'octoprint', host: '192.168.10.141' },
+  { name: "radio", host: "192.168.10.179" },
+  { name: "octoprint", host: "192.168.10.141" },
 ];
 
 interface FleetHost {
@@ -26,7 +26,7 @@ interface FleetHost {
 }
 
 export class FleetAdapter implements DataSourceAdapter {
-  readonly source_id = 'fleet.health';
+  readonly source_id = "fleet.health";
   readonly poll_interval_ms: number;
   readonly freshness_threshold_ms: number;
   private timeoutMs: number;
@@ -54,10 +54,14 @@ export class FleetAdapter implements DataSourceAdapter {
       const timeoutSec = Math.ceil(this.timeoutMs / 1000);
 
       const results = await Promise.allSettled(
-        hosts.map(async h => {
+        hosts.map(async (h) => {
           try {
+            // Sanitize host: allow only IPs and valid hostnames
+            if (!/^[a-zA-Z0-9._-]+$/.test(h.host)) {
+              return { name: h.name, host: h.host, reachable: false };
+            }
             await execAsync(
-              `ssh -o ConnectTimeout=${timeoutSec} -o BatchMode=yes ${h.host} echo ok`,
+              `ssh -o ConnectTimeout=${timeoutSec} -o BatchMode=yes -- ${h.host} echo ok`,
               { timeout: this.timeoutMs + 2000 },
             );
             return { name: h.name, host: h.host, reachable: true };
@@ -67,12 +71,12 @@ export class FleetAdapter implements DataSourceAdapter {
         }),
       );
 
-      const statuses = results.map(r =>
-        r.status === 'fulfilled' ? r.value : { name: 'unknown', host: 'unknown', reachable: false },
+      const statuses = results.map((r) =>
+        r.status === "fulfilled" ? r.value : { name: "unknown", host: "unknown", reachable: false },
       );
 
-      const unreachable = statuses.filter(s => !s.reachable).map(s => `${s.name} (${s.host})`);
-      const reachable = statuses.filter(s => s.reachable).map(s => s.name);
+      const unreachable = statuses.filter((s) => !s.reachable).map((s) => `${s.name} (${s.host})`);
+      const reachable = statuses.filter((s) => s.reachable).map((s) => s.name);
 
       return {
         source_id: this.source_id,
@@ -96,7 +100,7 @@ export class FleetAdapter implements DataSourceAdapter {
   private async loadHosts(): Promise<FleetHost[]> {
     try {
       if (existsSync(FLEET_JSON)) {
-        const raw = await readFile(FLEET_JSON, 'utf-8');
+        const raw = await readFile(FLEET_JSON, "utf-8");
         const data = JSON.parse(raw);
         if (Array.isArray(data.hosts)) return data.hosts;
         if (Array.isArray(data)) return data;
