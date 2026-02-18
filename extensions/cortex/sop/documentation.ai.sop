@@ -1,0 +1,68 @@
+meta:
+  name: LBF Documentation Standard
+  version: "1.0.0"
+  repo: ~/Projects/lbf-templates
+  hosts: [all]
+  updated: "2026-02-17"
+
+preflight:
+  - id: check-template
+    action: Read the LBF template files before writing ANY project documentation
+    command: ls ~/Projects/lbf-templates/project/
+    reason: "Every project follows the same template. Don't improvise."
+
+  - id: check-compliance
+    action: Audit template compliance before claiming docs are done
+    command: |
+      for f in ARCHITECTURE.md CHANGELOG.md DATA_DICTIONARY.md ONBOARDING.md README.md RUNBOOK.md; do
+        [ ! -f "$f" ] && echo "MISSING: $f"
+      done
+      for suffix in .ai.context .ai.index .ai.register .ai.toc; do
+        found=$(ls *${suffix} 2>/dev/null | head -1)
+        [ -z "$found" ] && echo "MISSING: ${suffix}"
+      done
+    reason: "Zero projects were fully compliant when audited on 2026-02-17. Never again."
+
+commands:
+  audit-all: |
+    for dir in ~/Projects/lbf-* ~/Projects/augur-* ~/Projects/wems* ~/Projects/crypto-* ~/Projects/helios/extensions/cortex; do
+      [ ! -d "$dir" ] && continue
+      name=$(basename "$dir")
+      missing=""
+      for f in ARCHITECTURE.md CHANGELOG.md DATA_DICTIONARY.md ONBOARDING.md README.md RUNBOOK.md; do
+        [ ! -f "$dir/$f" ] && missing="$missing $f"
+      done
+      for suffix in .ai.context .ai.index .ai.register .ai.toc; do
+        found=$(ls "$dir"/*${suffix} 2>/dev/null | head -1)
+        [ -z "$found" ] && missing="$missing ${suffix}"
+      done
+      total=$(echo "$missing" | wc -w)
+      [ "$total" -eq 0 ] && echo "✅ $name" || echo "❌ $name: $missing"
+    done
+
+  scaffold-new-project: |
+    # Copy template to new project and replace placeholders
+    cp ~/Projects/lbf-templates/project/* /path/to/new/project/
+    # Rename .ai.* files with project name prefix
+    # Fill in actual content from codebase
+
+gotchas:
+  - id: template-first
+    description: "LBF template at ~/Projects/lbf-templates/project/ defines 10 required files per project. Read it before writing docs."
+    fix: "Always reference the template. Don't write docs from scratch."
+    learned: "2026-02-17"
+
+  - id: no-placeholders
+    description: "Template files filled with {Project Name} placeholders are useless. Read the actual codebase and write real content."
+    fix: "Examine the code, understand the project, then fill in the docs."
+    learned: "2026-02-17"
+
+  - id: ai-file-prefix
+    description: ".ai.* files use the project name as prefix (e.g., augur-trading.ai.toc, not just .ai.toc)"
+    fix: "Use the project directory name as the prefix"
+    learned: "2026-02-17"
+
+  - id: never-overwrite
+    description: "If a project already has a template file with real content, don't overwrite it"
+    fix: "Check for existing files before creating new ones"
+    learned: "2026-02-17"
