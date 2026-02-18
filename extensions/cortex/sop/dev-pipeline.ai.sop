@@ -136,6 +136,30 @@ pipeline:
         8. Send final synapse message to main agent with release summary
         Write to pipeline/{task_id}/release-notes.md
 
+    - id: bugfix
+      role: Bugfix Engineer
+      description: >
+        Runs EVERY cycle regardless of new feature work. Checks for test failures,
+        regressions, broken builds, SOP violations, and fixes them.
+      input: "Git log, test results, previous pipeline failures"
+      output: "bugfix-report.md — issues found and fixed"
+      instructions: >
+        You are a Bugfix Engineer. Run EVERY pipeline cycle:
+        1. Check git log for recent commits — look for broken tests, reverts, fixups
+        2. Run any available test suites in the affected project
+        3. Check for TypeScript/lint errors: cd ~/Projects/helios && npx tsc --noEmit 2>&1 | head -50
+        4. Check for Python syntax errors in augur, WEMS, cortex python code
+        5. Review pipeline/{task_id}/security-review.md and test-report.md for unresolved issues
+        6. Check synapse inbox for blocked pipeline reports
+        7. Fix what you find. Commit each fix separately with "fix: " prefix.
+        8. If nothing is broken, report clean and move on.
+        Write to pipeline/{task_id}/bugfix-report.md (or pipeline/bugfix-{date}.md if no active task)
+
+  versioning:
+    rule: "Each completed pipeline task = one patch bump"
+    example: "v1.1.0 → v1.1.1 → v1.1.2 → ... → v1.1.20"
+    note: "20 tasks in the improvement plan = version ends at v1.1.20. Minor bump reserved for phase completions."
+
   state_file: ~/Projects/helios/extensions/cortex/pipeline/state.json
   artifacts_dir: ~/Projects/helios/extensions/cortex/pipeline/
 
