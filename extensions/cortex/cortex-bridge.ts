@@ -23,6 +23,7 @@ export interface CortexMemory {
   timestamp: string;
   importance: number;
   access_count: number;
+  confidence?: number; // Reliability score 0.1-1.0
   score?: number;
   recency_score?: number;
   semantic_score?: number;
@@ -1244,9 +1245,10 @@ print(json.dumps(result))
       category?: string; // Deprecated: use categories
       categories?: string | string[];
       importance?: number;
+      confidence?: number;
     } = {},
   ): Promise<string> {
-    const { source = "agent", importance = 1.0 } = options;
+    const { source = "agent", importance = 1.0, confidence = 1.0 } = options;
     const normalizedCats = normalizeCategories(options.categories ?? options.category);
 
     // Add to RAM cache
@@ -1262,19 +1264,20 @@ print(json.dumps(result))
       access_count: 0,
     });
 
-    // For Python, send categories as JSON array
+    // For Python, use UnifiedBrain.remember method
     const categoriesJson = JSON.stringify(normalizedCats);
     const code = `
 import json
 import sys
 sys.path.insert(0, '${this.pythonScriptsDir}')
-from embeddings_manager import add_memory, init_db
-init_db()
-result = add_memory(
+from brain import UnifiedBrain
+brain = UnifiedBrain()
+result = brain.remember(
     ${JSON.stringify(content)},
-    source=${JSON.stringify(source)},
     categories=${categoriesJson},
-    importance=${importance}
+    importance=${importance},
+    source=${JSON.stringify(source)},
+    confidence=${confidence}
 )
 print(json.dumps(result))
 `;
@@ -1288,20 +1291,64 @@ print(json.dumps(result))
     total: number;
     by_category: Record<string, number>;
     by_source: Record<string, number>;
+    confidence_stats?: any;
   }> {
     const code = `
 import json
 import sys
 sys.path.insert(0, '${this.pythonScriptsDir}')
-from embeddings_manager import stats, init_db
-init_db()
-result = stats()
-print(json.dumps(result))
+from brain import UnifiedBrain
+try:
+    brain = UnifiedBrain()
+    # Get basic stats (existing functionality)
+    conn = brain._conn()
+    c = conn.cursor()
+    
+    # Total count
+    c.execute("SELECT COUNT(*) FROM stm")
+    total = c.fetchone()[0]
+    
+    # By category (simplified)
+    by_category = {}
+    c.execute("SELECT categories, COUNT(*) FROM stm GROUP BY categories")
+    for row in c.fetchall():
+        cats_str = row[0] or '["general"]'
+        count = row[1]
+        try:
+            cats = json.loads(cats_str)
+            if isinstance(cats, list) and len(cats) > 0:
+                by_category[cats[0]] = by_category.get(cats[0], 0) + count
+            else:
+                by_category["general"] = by_category.get("general", 0) + count
+        except:
+            by_category["general"] = by_category.get("general", 0) + count
+    
+    # By source
+    by_source = {}
+    c.execute("SELECT source, COUNT(*) FROM stm GROUP BY source")
+    for row in c.fetchall():
+        by_source[row[0]] = row[1]
+    
+    conn.close()
+    
+    # Get confidence stats
+    confidence_stats = brain.get_confidence_stats()
+    
+    result = {
+        "total": total,
+        "by_category": by_category,
+        "by_source": by_source,
+        "confidence_stats": confidence_stats
+    }
+    print(json.dumps(result))
+except Exception as e:
+    print(json.dumps({"total": 0, "by_category": {}, "by_source": {}, "error": str(e)}))
 `;
     return (await this.runPython(code)) as {
       total: number;
       by_category: Record<string, number>;
       by_source: Record<string, number>;
+      confidence_stats?: any;
     };
   }
 

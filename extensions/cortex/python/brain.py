@@ -781,6 +781,7 @@ class UnifiedBrain:
         importance: float = 1.0,
         source: str = "agent",
         source_message_id: Optional[str] = None,
+        confidence: float = 1.0,
     ) -> str:
         """Store a memory in STM. Returns memory ID."""
         mem_id = _gen_id("stm")
@@ -792,9 +793,11 @@ class UnifiedBrain:
 
         c.execute(
             """INSERT INTO stm (id, content, categories, importance, access_count,
-                   created_at, source, source_message_id)
-               VALUES (?, ?, ?, ?, 0, ?, ?, ?)""",
-            (mem_id, content, cats_json, importance, now, source, source_message_id),
+                   created_at, source, source_message_id, confidence, last_accessed, 
+                   validation_count, contradiction_count)
+               VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 0, 0)""",
+            (mem_id, content, cats_json, importance, now, source, source_message_id, 
+             confidence, now),
         )
 
         # FTS sync
@@ -919,6 +922,73 @@ class UnifiedBrain:
         conn.commit()
         conn.close()
         return updated
+
+    def update_memory_confidence(self, memory_id: str, memory_type: str = "stm") -> float:
+        """Update confidence when memory is accessed. Returns new confidence."""
+        try:
+            from confidence_engine import ConfidenceEngine
+            engine = ConfidenceEngine(str(self.db_path))
+            return engine.update_on_access(memory_id, memory_type)
+        except ImportError:
+            # Fallback if confidence engine not available
+            return 0.5
+
+    def apply_validation_feedback(self, memory_id: str, success: bool, memory_type: str = "stm") -> float:
+        """Apply validation feedback to memory confidence. Returns new confidence."""
+        try:
+            from confidence_engine import ConfidenceEngine
+            engine = ConfidenceEngine(str(self.db_path))
+            return engine.apply_validation_bonus(memory_id, success, memory_type)
+        except ImportError:
+            return 0.5
+
+    def get_confidence_stats(self) -> dict:
+        """Get confidence distribution statistics."""
+        try:
+            from confidence_engine import ConfidenceEngine
+            engine = ConfidenceEngine(str(self.db_path))
+            return engine.get_confidence_stats()
+        except ImportError:
+            return {}
+
+    def search_by_confidence(self, min_confidence: float = 0.5, memory_type: str = "stm", limit: int = 100) -> List[dict]:
+        """Search memories by minimum confidence threshold."""
+        conn = self._conn()
+        c = conn.cursor()
+        
+        table_map = {
+            "stm": "stm",
+            "embedding": "embeddings",
+            "atom": "atoms"
+        }
+        table = table_map.get(memory_type, "stm")
+        
+        try:
+            c.execute(f"""
+                SELECT * FROM {table} 
+                WHERE confidence >= ? 
+                ORDER BY confidence DESC, created_at DESC 
+                LIMIT ?
+            """, (min_confidence, limit))
+            
+            rows = c.fetchall()
+            results = []
+            for r in rows:
+                d = dict(r)
+                if d.get("categories"):
+                    try:
+                        d["categories"] = json.loads(d["categories"])
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                results.append(d)
+                
+            conn.close()
+            return results
+            
+        except sqlite3.OperationalError:
+            # Table might not have confidence column yet
+            conn.close()
+            return []
 
     # ===================================================================
     # CORTEX: Knowledge — Atoms

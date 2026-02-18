@@ -966,6 +966,7 @@ const cortexPlugin = {
               source: "agent",
               categories,
               importance,
+              confidence: 1.0, // New memories start with perfect confidence
             });
 
             return {
@@ -1033,7 +1034,11 @@ const cortexPlugin = {
                             const ageLabel = age > 0.9 ? "now" : age > 0.5 ? "recent" : "older";
                             // PHASE 2B: Display all categories
                             const cats = i.categories ?? (i.category ? [i.category] : ["general"]);
-                            return `[${cats.join(", ")}] (imp=${i.importance.toFixed(1)}, ${ageLabel}) ${i.content.slice(0, 150)}`;
+                            // Include confidence percentage if available
+                            const confidenceText = i.confidence
+                              ? ` conf=${Math.round(i.confidence * 100)}%`
+                              : "";
+                            return `[${cats.join(", ")}] (imp=${i.importance.toFixed(1)}, ${ageLabel}${confidenceText}) ${i.content.slice(0, 150)}`;
                           })
                           .join("\n")
                       : "STM is empty.",
@@ -1108,6 +1113,20 @@ const cortexPlugin = {
                     Object.entries(dbStats.by_source)
                       .map(([k, v]) => `${k}(${v})`)
                       .join(", ") || "none"
+                  }
+
+🎯 Confidence Distribution:${
+                    dbStats.confidence_stats
+                      ? Object.entries(dbStats.confidence_stats)
+                          .map(([type, stats]: [string, any]) => {
+                            if (stats.total > 0) {
+                              return `\n  ${type}: ${stats.total} memories (avg: ${(stats.average_confidence * 100).toFixed(0)}%)
+    High (≥80%): ${stats.high_confidence}, Medium (50-80%): ${stats.medium_confidence}, Low (<50%): ${stats.low_confidence}`;
+                            }
+                            return "";
+                          })
+                          .join("")
+                      : "\n  Confidence data not available (run migration)"
                   }
 
 🔥 Hot Memory Tier (PHASE 2):
