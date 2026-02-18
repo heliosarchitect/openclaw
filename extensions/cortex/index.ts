@@ -735,6 +735,12 @@ const cortexPlugin = {
             // Build context string from params
             const paramStr = JSON.stringify(event.params).toLowerCase();
 
+            // Read-only commands should never be blocked — just warn
+            const READ_ONLY_PATTERN =
+              /^\s*(ls|cat|head|tail|grep|find|wc|stat|file|echo|pwd|which|type|test|diff|git\s+(log|tag|status|diff|show|branch)|systemctl\s+--user\s+(status|list|is-active)|journalctl|nvidia-smi|free|df|du|uptime|ps|top|htop)\b/i;
+            const commandStr = (event.params as { command?: string })?.command || "";
+            const isReadOnly = READ_ONLY_PATTERN.test(commandStr.trim());
+
             // Collect matching SOPs
             const matchedSOPs: Array<{ label: string; path: string }> = [];
 
@@ -809,6 +815,23 @@ const cortexPlugin = {
 
             if (sopContents.length === 0) {
               return;
+            }
+
+            // For read-only commands: log the SOP match but DON'T block.
+            // Mark as injected so cooldown applies, then let execution proceed.
+            if (isReadOnly) {
+              api.logger.info?.(
+                `Cortex SOP: read-only pass-through for ${event.toolName} — ${newSOPs.map((s) => s.label).join(", ")}`,
+              );
+              for (const sop of newSOPs) {
+                writeMetric("sop", {
+                  sop_name: sop.label.toLowerCase().replace(/\s+/g, "_") + ".ai.sop",
+                  tool_blocked: false,
+                  tool_name: event.toolName,
+                  acknowledged: true,
+                }).catch(() => {});
+              }
+              return; // Allow execution
             }
 
             // Block the tool call with SOP content as the reason
