@@ -321,6 +321,29 @@ class UnifiedBrain:
             )
         """)
 
+        # -- SESSION STATES (cross-session persistence, v2.0.0) --
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS session_states (
+                id TEXT PRIMARY KEY,
+                start_time TEXT NOT NULL,
+                end_time TEXT,
+                channel TEXT DEFAULT 'unknown',
+                working_memory TEXT NOT NULL DEFAULT '[]',
+                hot_topics TEXT NOT NULL DEFAULT '[]',
+                active_projects TEXT NOT NULL DEFAULT '[]',
+                pending_tasks TEXT NOT NULL DEFAULT '[]',
+                recent_learnings TEXT NOT NULL DEFAULT '[]',
+                confidence_updates TEXT NOT NULL DEFAULT '[]',
+                sop_interactions TEXT NOT NULL DEFAULT '[]',
+                previous_session_id TEXT,
+                continued_by TEXT,
+                crash_recovered INTEGER DEFAULT 0,
+                schema_version INTEGER DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT
+            )
+        """)
+
         # -- INDEXES --
         c.execute("CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id, created_at)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_messages_from ON messages(from_agent, created_at)")
@@ -337,6 +360,11 @@ class UnifiedBrain:
         c.execute("CREATE INDEX IF NOT EXISTS idx_todos_status ON todos(status, priority)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_todos_assigned ON todos(assigned_to)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_todos_due ON todos(due_at)")
+
+        # Session persistence indexes
+        c.execute("CREATE INDEX IF NOT EXISTS idx_session_endtime ON session_states(end_time, start_time)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_session_prev ON session_states(previous_session_id)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_session_channel ON session_states(channel, start_time)")
 
         conn.commit()
         conn.close()

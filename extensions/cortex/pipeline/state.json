@@ -1,6 +1,22 @@
 {
   "pipeline_version": "1.0.0",
-  "active_tasks": [],
+  "active_tasks": [
+    {
+      "task_id": "task-004-session-persistence",
+      "title": "Cross-Session State Preservation",
+      "description": "Maintain context across session boundaries. Session state capture at end-of-session, inheritance at session-start, confidence-decayed context restoration. Phase 2.1 of IMPROVEMENT_PLAN.",
+      "phase": "2.1",
+      "started_at": "2026-02-18T18:00:00Z",
+      "current_stage": "security",
+      "stages_completed": ["requirements", "design", "document", "build"],
+      "artifacts": {
+        "requirements": "pipeline/task-004-session-persistence/requirements.md",
+        "design": "pipeline/task-004-session-persistence/design.md",
+        "documentation": "pipeline/task-004-session-persistence/document.md",
+        "build": "pipeline/task-004-session-persistence/build-report.md"
+      }
+    }
+  ],
   "completed_tasks": [
     {
       "task_id": "task-003-pre-action-hooks",
@@ -19,7 +35,8 @@
         "build",
         "security",
         "test",
-        "deploy"
+        "deploy",
+        "done"
       ],
       "artifacts": {
         "requirements": "pipeline/task-003-pre-action-hooks/requirements.md",
@@ -28,7 +45,8 @@
         "build": "pipeline/task-003-pre-action-hooks/build-report.md",
         "security": "pipeline/task-003-pre-action-hooks/security-review.md",
         "test": "pipeline/task-003-pre-action-hooks/test-report.md",
-        "deploy": "pipeline/task-003-pre-action-hooks/release-notes.md"
+        "deploy": "pipeline/task-003-pre-action-hooks/release-notes.md",
+        "done": "pipeline/task-003-pre-action-hooks/done.md"
       }
     },
     {
@@ -88,5 +106,5 @@
       }
     }
   ],
-  "next_task_id": 4
+  "next_task_id": 5
 }

@@ -1967,6 +1967,99 @@ print(json.dumps(result))
 `;
     return (await this.runPython(code)) as DelayPatternResult;
   }
+
+  // =========================================================================
+  // Session Persistence Methods (v2.0.0)
+  // =========================================================================
+
+  async saveSessionState(state: Record<string, unknown>): Promise<void> {
+    const b64 = Buffer.from(JSON.stringify(state)).toString("base64");
+    const code = `
+import json, sys, base64
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from session_manager import SessionManager
+sm = SessionManager()
+data = json.loads(base64.b64decode('${b64}').decode())
+sm.save_session(data)
+print(json.dumps({"ok": True}))
+`;
+    await this.runPython(code);
+  }
+
+  async getRecentSessions(
+    days: number = 7,
+    limit: number = 20,
+  ): Promise<Record<string, unknown>[]> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from session_manager import SessionManager
+sm = SessionManager()
+result = sm.get_recent_sessions(days=${days}, limit=${limit})
+print(json.dumps(result))
+`;
+    return (await this.runPython(code)) as Record<string, unknown>[];
+  }
+
+  async markSessionContinued(sessionId: string, nextSessionId: string): Promise<void> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from session_manager import SessionManager
+sm = SessionManager()
+sm.mark_continued('${sessionId}', '${nextSessionId}')
+print(json.dumps({"ok": True}))
+`;
+    await this.runPython(code);
+  }
+
+  async detectCrashedSessions(activeSessionId: string): Promise<Record<string, unknown>[]> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from session_manager import SessionManager
+sm = SessionManager()
+result = sm.get_crashed_sessions('${activeSessionId}')
+print(json.dumps(result))
+`;
+    return (await this.runPython(code)) as Record<string, unknown>[];
+  }
+
+  async recoverCrashedSession(sessionId: string, estimatedEndTime: string): Promise<void> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from session_manager import SessionManager
+sm = SessionManager()
+sm.recover_crashed('${sessionId}', '${estimatedEndTime}')
+print(json.dumps({"ok": True}))
+`;
+    await this.runPython(code);
+  }
+
+  async getSessionChain(sessionId: string, depth: number = 5): Promise<Record<string, unknown>[]> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from session_manager import SessionManager
+sm = SessionManager()
+result = sm.get_session_chain('${sessionId}', depth=${depth})
+print(json.dumps(result))
+`;
+    return (await this.runPython(code)) as Record<string, unknown>[];
+  }
+
+  async getMostRecentSession(): Promise<Record<string, unknown> | null> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from session_manager import SessionManager
+sm = SessionManager()
+result = sm.get_most_recent_session()
+print(json.dumps(result))
+`;
+    return (await this.runPython(code)) as Record<string, unknown> | null;
+  }
 }
 
 /**

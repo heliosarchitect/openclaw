@@ -20,16 +20,24 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { Type } from "@sinclair/typebox";
 import { exec } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
+import type {
+  RestoredSessionContext,
+  SessionPersistenceConfig,
+  WorkingMemoryPin,
+} from "./session/types.js";
 import { CortexBridge, type STMItem, estimateTokens } from "./cortex-bridge.js";
 import { ContextExtractor } from "./hooks/context-extractor.js";
 import { EnforcementEngine, EnforcementLevel } from "./hooks/enforcement-engine.js";
 import { KnowledgeDiscovery } from "./hooks/knowledge-discovery.js";
 import { SOPEnhancer } from "./hooks/sop-enhancer.js";
+import { HotTopicExtractor } from "./session/hot-topic-extractor.js";
+import { SessionPersistenceManager } from "./session/session-manager.js";
 
 const execAsync = promisify(exec);
 
@@ -537,6 +545,18 @@ const cortexPlugin = {
       confidenceThreshold: Type.Number({ default: 0.5, minimum: 0.1, maximum: 1.0 }),
       emergencyBypass: Type.Boolean({ default: false }),
     }),
+    // PHASE 4: Session Persistence
+    session_persistence: Type.Object({
+      enabled: Type.Boolean({ default: true }),
+      lookback_days: Type.Number({ default: 7, minimum: 1, maximum: 30 }),
+      relevance_threshold: Type.Number({ default: 0.25, minimum: 0.1, maximum: 1.0 }),
+      max_sessions_scored: Type.Number({ default: 3, minimum: 1, maximum: 10 }),
+      max_inherited_pins: Type.Number({ default: 5, minimum: 1, maximum: 8 }),
+      decay_min_floor: Type.Number({ default: 0.3, minimum: 0.1, maximum: 0.9 }),
+      critical_inheritance_days: Type.Number({ default: 7, minimum: 1, maximum: 30 }),
+      sessions_dir: Type.String({ default: "~/.openclaw/sessions" }),
+      debug: Type.Boolean({ default: false }),
+    }),
   }),
 
   register(api: OpenClawPluginApi) {
@@ -567,6 +587,18 @@ const cortexPlugin = {
         maxKnowledgeLength: number;
         confidenceThreshold: number;
         emergencyBypass: boolean;
+      };
+      // PHASE 4
+      session_persistence: {
+        enabled: boolean;
+        lookback_days: number;
+        relevance_threshold: number;
+        max_sessions_scored: number;
+        max_inherited_pins: number;
+        decay_min_floor: number;
+        critical_inheritance_days: number;
+        sessions_dir: string;
+        debug: boolean;
       };
     }>;
 
@@ -606,6 +638,18 @@ const cortexPlugin = {
         confidenceThreshold: rawConfig.preActionHooks?.confidenceThreshold ?? 0.5,
         emergencyBypass: rawConfig.preActionHooks?.emergencyBypass ?? false,
       },
+      // PHASE 4: Session Persistence
+      session_persistence: {
+        enabled: rawConfig.session_persistence?.enabled ?? true,
+        lookback_days: rawConfig.session_persistence?.lookback_days ?? 7,
+        relevance_threshold: rawConfig.session_persistence?.relevance_threshold ?? 0.25,
+        max_sessions_scored: rawConfig.session_persistence?.max_sessions_scored ?? 3,
+        max_inherited_pins: rawConfig.session_persistence?.max_inherited_pins ?? 5,
+        decay_min_floor: rawConfig.session_persistence?.decay_min_floor ?? 0.3,
+        critical_inheritance_days: rawConfig.session_persistence?.critical_inheritance_days ?? 7,
+        sessions_dir: rawConfig.session_persistence?.sessions_dir ?? "~/.openclaw/sessions",
+        debug: rawConfig.session_persistence?.debug ?? false,
+      },
     };
 
     if (!config.enabled) {
@@ -622,6 +666,26 @@ const cortexPlugin = {
         truncateOldMemoriesTo: config.truncateOldMemoriesTo,
       },
     });
+
+    // PHASE 4: Initialize session persistence
+    const hotTopicExtractor = new HotTopicExtractor();
+    let sessionManager: SessionPersistenceManager | null = null;
+    let sessionId: string | null = null;
+    let restoredSessionContext: RestoredSessionContext | null = null;
+    let preambleInjected = false;
+
+    if (config.session_persistence.enabled) {
+      sessionManager = new SessionPersistenceManager(
+        bridge,
+        api.logger as unknown as {
+          info: ((message: string) => void) | undefined;
+          warn: ((message: string) => void) | undefined;
+          debug?: (message: string) => void;
+        },
+        config.session_persistence,
+      );
+      api.logger.info?.("Cortex Session Persistence enabled");
+    }
 
     // PHASE 3: Initialize pre-action hook system
     let knowledgeDiscovery: KnowledgeDiscovery | null = null;
@@ -750,6 +814,17 @@ const cortexPlugin = {
       api.on(
         "before_tool_call",
         async (event, _ctx) => {
+          // PHASE 4: Record tool call for hot topic extraction
+          hotTopicExtractor.recordToolCall(
+            event.toolName,
+            (event.params ?? {}) as Record<string, unknown>,
+          );
+          // Extract workdir from exec calls
+          if (event.toolName === "exec") {
+            const wd = (event.params as { workdir?: string })?.workdir;
+            if (wd) hotTopicExtractor.recordExecWorkdir(wd);
+          }
+
           // Only intercept configured tools
           if (!interceptTools.has(event.toolName)) {
             return;
@@ -1147,6 +1222,10 @@ const cortexPlugin = {
               importance,
               confidence: 1.0, // New memories start with perfect confidence
             });
+
+            // PHASE 4: Track for session persistence
+            hotTopicExtractor.recordMemoryAccess(categories);
+            hotTopicExtractor.recordLearningId(memId);
 
             return {
               content: [
@@ -3070,6 +3149,68 @@ print(json.dumps({"count": len(result), "messages": result}))
     );
 
     // =========================================================================
+    // Tool: cortex_session_continue - Manual session continuity override
+    // =========================================================================
+    api.registerTool(
+      {
+        name: "cortex_session_continue",
+        label: "Session Continue",
+        description:
+          "Manually inherit context from a specific prior session. Use when automatic session restoration missed important context.",
+        parameters: Type.Object({
+          session_id: Type.String({
+            description: "Prior session ID to force-inherit from",
+          }),
+        }),
+        async execute(_toolCallId, params) {
+          const p = params as { session_id: string };
+
+          if (!sessionManager) {
+            return {
+              content: [{ type: "text", text: "Session persistence is disabled" }],
+              details: { error: "disabled" },
+            };
+          }
+
+          try {
+            const result = await sessionManager.forceInheritSession(
+              p.session_id,
+              loadWorkingMemory as () => Promise<WorkingMemoryPin[]>,
+              saveWorkingMemory as (items: WorkingMemoryPin[]) => Promise<void>,
+            );
+
+            if (result.preamble) {
+              restoredSessionContext = result;
+              preambleInjected = false; // Allow re-injection
+            }
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: result.preamble
+                    ? `Inherited from session ${p.session_id}: ${result.inheritedPins.length} pins, ${result.pendingTaskCount} pending tasks`
+                    : `Session ${p.session_id} not found or has no restorable state`,
+                },
+              ],
+              details: {
+                inherited_pins: result.inheritedPins.length,
+                pending_tasks: result.pendingTaskCount,
+                preamble_available: !!result.preamble,
+              },
+            };
+          } catch (err) {
+            return {
+              content: [{ type: "text", text: `Session continue failed: ${err}` }],
+              details: { error: String(err) },
+            };
+          }
+        },
+      },
+      { names: ["cortex_session_continue"] },
+    );
+
+    // =========================================================================
     // Hook: message_received - Track Active Session (L2)
     // =========================================================================
     api.on("message_received", async (event, _ctx) => {
@@ -3150,6 +3291,15 @@ print(json.dumps({"count": len(result), "messages": result}))
                 `Cortex: prefetched ${prefetchCount} memories for category "${queryCategory}"`,
               );
             }
+          }
+
+          // L0. Session Continuity Preamble (one-time, first turn only)
+          if (!preambleInjected && restoredSessionContext?.preamble) {
+            contextParts.push(
+              `<session-continuity hint="inherited from prior sessions">\n` +
+                `${restoredSessionContext.preamble}\n</session-continuity>`,
+            );
+            preambleInjected = true;
           }
 
           // L1. Working Memory (pinned items) - ALWAYS injected first (no token limit)
@@ -3529,6 +3679,19 @@ print(json.dumps({"count": len(result), "messages": result}))
         } catch (err) {
           api.logger.debug?.(`Cortex auto-capture failed: ${err}`);
         }
+
+        // PHASE 4: Incremental session state update (crash-safe)
+        if (config.session_persistence.enabled && sessionManager && sessionId) {
+          try {
+            await sessionManager.updateSessionState({
+              hot_topics: hotTopicExtractor.getCurrentTopics(),
+              active_projects: hotTopicExtractor.getActiveProjects(),
+              recent_learnings: hotTopicExtractor.getRecentLearningIds(),
+            });
+          } catch {
+            // Non-fatal
+          }
+        }
       });
     }
 
@@ -3545,9 +3708,43 @@ print(json.dumps({"count": len(result), "messages": result}))
           } catch (err) {
             api.logger.warn(`Cortex sync failed: ${err}`);
           }
+
+          // PHASE 4: Session persistence — restore prior state
+          if (sessionManager) {
+            try {
+              sessionId = randomUUID();
+              const channel =
+                ((api as unknown as Record<string, unknown>).channel as string) ?? "unknown";
+              restoredSessionContext = await sessionManager.onSessionStart(
+                sessionId,
+                channel,
+                loadWorkingMemory as () => Promise<WorkingMemoryPin[]>,
+                saveWorkingMemory as (items: WorkingMemoryPin[]) => Promise<void>,
+              );
+            } catch (err) {
+              api.logger.warn?.(`Session persistence start failed (cold start): ${err}`);
+              restoredSessionContext = null;
+            }
+          }
         }
       },
       async stop() {
+        // PHASE 4: Capture final session state
+        if (sessionManager && sessionId) {
+          try {
+            await sessionManager.onSessionEnd(
+              sessionId,
+              hotTopicExtractor.getTopN(20),
+              hotTopicExtractor.getActiveProjects(),
+              [], // pending tasks — detected from pipeline state
+              hotTopicExtractor.getAllLearningIds(),
+              hotTopicExtractor.getSOPInteractions(),
+              loadWorkingMemory as () => Promise<WorkingMemoryPin[]>,
+            );
+          } catch (err) {
+            api.logger.warn?.(`Session capture failed: ${err}`);
+          }
+        }
         api.logger.info("Cortex memory service stopped");
       },
     });
