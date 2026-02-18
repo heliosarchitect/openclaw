@@ -772,6 +772,96 @@ class ContinuousLearner {
 
 ---
 
+## Phase 5: Game-Changer Features (6-8 weeks)
+
+_Capabilities that put Helios ahead of what model providers ship_
+
+### 5.1 Predictive Intent — Act Before Asked (task-005)
+
+**Goal**: Synthesize calendar, repos, trading systems, and user patterns to anticipate needs and deliver timed insights before being asked.
+
+**Key Capabilities**:
+
+- Context fusion across all data sources (AUGUR signals, calendar, git activity, fleet health, print jobs)
+- Temporal awareness: deliver insights when they're actionable, not just when they exist
+- Priority scoring: distinguish "nice to know" from "act now"
+- Proactive briefings: morning context, pre-meeting prep, anomaly alerts
+- Learn which predictions Matthew acts on → reinforce those patterns
+
+### 5.2 Self-Healing Infrastructure (task-006)
+
+**Goal**: Monitor → detect anomaly → attempt fix → escalate only if fix fails. Turn every incident into a runbook, then automate the runbook.
+
+**Key Capabilities**:
+
+- Service health monitoring (AUGUR executor, signal-cli, pipeline agents, fleet services)
+- Anomaly detection: phantom positions, zombie processes, stale signals, disk/memory pressure
+- Automated remediation: restart services, clear stale state, rotate logs
+- Incident-to-runbook pipeline: every manual fix becomes an automated response
+- Escalation tiers: auto-fix → Synapse alert → Signal notification to Matthew
+
+### 5.3 Adversarial Self-Testing (task-007)
+
+**Goal**: Chaos engineering for AI systems. Actively try to break what we build before production does.
+
+**Key Capabilities**:
+
+- Spawn adversarial agents that inject bad data into memory, simulate crashes, feed contradictory SOPs
+- Fuzz testing for pre-action hooks: can they be bypassed?
+- Memory corruption tests: what happens when confidence scores are wrong?
+- Pipeline stress tests: what breaks under concurrent stage execution?
+- Generate failure reports that feed directly into the self-improvement loop
+
+### 5.4 Knowledge Compression — Abstraction Engine (task-008)
+
+**Goal**: Continuously compress observations into principles. 50 data points → 3 insights.
+
+**Key Capabilities**:
+
+- Automatic clustering of related memories across categories
+- Principle extraction: find the common thread across specific observations
+- Hierarchical abstraction: facts → patterns → principles → axioms
+- Compression metrics: track ratio of raw observations to derived principles
+- Integration with atoms system: link compressed knowledge to source observations
+
+### 5.5 Cross-Domain Pattern Transfer (task-009)
+
+**Goal**: Find structural similarities across completely different domains (trading, radio, fleet, infrastructure).
+
+**Key Capabilities**:
+
+- Mathematical structure matching: same pattern shape in different data
+- Metaphor engine: "VWAP divergence in trading" ≈ "signal fade in ham radio" ≈ "resource contention in fleet"
+- Cross-pollination alerts: "Pattern X that works in domain A might apply to domain B"
+- Domain-agnostic feature extraction from domain-specific data
+- Novel hypothesis generation from cross-domain connections
+
+### 5.6 Earned Autonomy — Progressive Trust (task-010)
+
+**Goal**: Build a quantified track record. Small decisions made well → earn the right to make bigger ones without asking.
+
+**Key Capabilities**:
+
+- Decision tracking: log every autonomous decision and its outcome
+- Trust scoring: success rate by decision category and risk level
+- Auto-approve tiers: tier 1 (read-only) → tier 2 (non-destructive) → tier 3 (infrastructure changes) → tier 4 (financial)
+- Promotion/demotion: good track record raises tier, mistakes lower it
+- Transparency: Matthew can see the full decision log and trust scores at any time
+
+### 5.7 Real-Time Learning from Failure — Instant Propagation (task-011)
+
+**Goal**: One mistake should make the entire system permanently better in under 60 seconds.
+
+**Key Capabilities**:
+
+- Failure detection: catch the mistake as it happens (error, correction from Matthew, SOP violation)
+- Instant propagation chain: rewrite SOP → update pre-action hook patterns → adjust confidence scores → add regression test
+- Cross-system updates: a failure in AUGUR should update fleet SOPs if the root cause is infrastructure
+- Failure-to-fix pipeline: mistake → root cause → SOP patch → test → deploy (all automated)
+- Metrics: time-to-propagation, propagation completeness, recurrence rate
+
+---
+
 ## Implementation Timeline
 
 ```mermaid
