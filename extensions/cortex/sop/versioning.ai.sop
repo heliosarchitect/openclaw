@@ -1,9 +1,9 @@
 meta:
   name: LBF Versioning Standard
-  version: "1.0.0"
+  version: "1.1.0"
   repo: ~/Projects/helios/extensions/cortex/sop
   hosts: [all]
-  updated: "2026-02-17"
+  updated: "2026-02-18"
 
 preflight:
   - id: check-version-consistency
@@ -24,28 +24,44 @@ preflight:
     action: "AUDIT before claiming 'done'. Run the check command, verify output, THEN report."
     reason: "Matthew caught version mismatches after being told semver was applied everywhere. Never again."
 
+rules:
+  semver:
+    format: "vMAJOR.MINOR.PATCH (e.g. v1.4.3)"
+    increment:
+      patch: "+0.0.1 — each bugfix, each test addition, each non-feature change. ONE per commit."
+      minor: "+0.1.0 — each new feature. ONE per commit. Resets patch to 0."
+      major: "+1.0.0 — breaking changes only. Resets minor and patch to 0."
+    tagging: "Every commit that ships a fix or feature MUST get its own semver tag. No lumping multiple changes into one version bump."
+    examples:
+      - "v1.4.0 → feat: add merge SOP"
+      - "v1.4.1 → test: export regression guard"
+      - "v1.4.2 → fix: resolve TS errors"
+      - "v1.4.3 → fix: SOP hook read-only passthrough"
+      - "v1.5.0 → feat: new AUGUR dashboard (resets patch)"
+
 commands:
   # Standard version bump flow
   bump-patch: |
+    # For: bugfixes, tests, non-feature changes
     # 1. Update ALL version sources
     npm version patch --no-git-tag-version 2>/dev/null  # package.json
     # Update pyproject.toml manually if it exists
     # 2. Commit
     git add -A && git commit -m "chore: bump to vX.Y.Z"
     # 3. Tag
-    git tag vX.Y.Z
+    git tag -a vX.Y.Z -m "fix: description"
     # 4. Push
     git push && git push --tags
     # 5. Update Google Sheet
     # 6. Update .ai.sop meta.version
 
   bump-minor: |
-    # Same as patch but increment minor version
-    # Use for new features
+    # For: each NEW FEATURE (one per feature, resets patch to 0)
+    # Same flow as patch but increment minor
 
   bump-major: |
-    # Same as patch but increment major version
-    # Use for breaking changes
+    # For: breaking changes ONLY
+    # Same flow as patch but increment major
 
   audit-all: |
     for dir in ~/Projects/lbf-* ~/Projects/augur-* ~/Projects/wems* ~/Projects/helios; do
