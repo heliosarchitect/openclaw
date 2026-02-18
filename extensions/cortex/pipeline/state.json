@@ -1,24 +1,36 @@
 {
   "pipeline_version": "1.0.0",
-  "active_tasks": [
+  "active_tasks": [],
+  "completed_tasks": [
     {
       "task_id": "task-005-predictive-intent",
       "title": "Predictive Intent \u2014 Act Before Asked",
+      "description": "Background polling engine across 10 data sources generating scored Insight records with urgency routing, feedback tracking, pattern learning, and briefing generation. Phase 5.1 of IMPROVEMENT_PLAN.",
       "phase": "5.1",
       "started_at": "2026-02-18T15:47:21-05:00",
+      "completed_at": "2026-02-18T22:14:00-05:00",
+      "version_released": "cortex-v2.1.0",
+      "commit": "a1e357f90",
       "current_stage": "deploy",
-      "stages_completed": ["requirements", "design", "document", "build", "security", "test"],
+      "stages_completed": [
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "artifacts": {
         "requirements": "pipeline/task-005-predictive-intent/requirements.md",
         "design": "pipeline/task-005-predictive-intent/design.md",
         "documentation": "pipeline/task-005-predictive-intent/document.md",
         "build": "pipeline/task-005-predictive-intent/build-report.md",
-        "security": "pipeline/task-005-predictive-intent/security.md",
-        "test": "pipeline/task-005-predictive-intent/test-report.md"
+        "security": "pipeline/task-005-predictive-intent/security-review.md",
+        "test": "pipeline/task-005-predictive-intent/test-report.md",
+        "deploy": "pipeline/task-005-predictive-intent/release-notes.md"
       }
-    }
-  ],
-  "completed_tasks": [
+    },
     {
       "task_id": "task-004-session-persistence",
       "title": "Cross-Session State Preservation",
@@ -137,7 +149,7 @@
       }
     }
   ],
-  "next_task_id": 5,
+  "next_task_id": 6,
   "queued_tasks": [
     {
       "task_id": "task-006-self-healing",
