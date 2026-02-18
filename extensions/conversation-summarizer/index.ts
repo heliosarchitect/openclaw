@@ -334,6 +334,7 @@ const conversationSummarizerPlugin = {
     api.registerTool(
       {
         name: "summarize_conversation",
+        label: "Summarize Conversation",
         description:
           "Manually trigger conversation summarization. Extracts decisions, insights, action items, and problems from the current conversation.",
         parameters: { type: "object", properties: {}, additionalProperties: false },

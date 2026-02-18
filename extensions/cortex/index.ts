@@ -1035,8 +1035,8 @@ const cortexPlugin = {
                             // PHASE 2B: Display all categories
                             const cats = i.categories ?? (i.category ? [i.category] : ["general"]);
                             // Include confidence percentage if available
-                            const confidenceText = i.confidence
-                              ? ` conf=${Math.round(i.confidence * 100)}%`
+                            const confidenceText = (i as any).confidence
+                              ? ` conf=${Math.round((i as any).confidence * 100)}%`
                               : "";
                             return `[${cats.join(", ")}] (imp=${i.importance.toFixed(1)}, ${ageLabel}${confidenceText}) ${i.content.slice(0, 150)}`;
                           })

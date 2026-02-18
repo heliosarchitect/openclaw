@@ -697,7 +697,7 @@ export class CortexBridge {
   private readonly stmCacheTTL = 5000; // 5 second TTL for STM cache
 
   // Configuration
-  public readonly stmCapacity = 50000; // PHASE 1: Massive STM capacity
+  public stmCapacity = 50000; // PHASE 1: Massive STM capacity
   public readonly activeSessionCapacity = 50; // Last 50 messages always in RAM
 
   // PHASE 2: Token budget and delta sync configuration
@@ -954,7 +954,7 @@ export class CortexBridge {
       const results = await this.searchMemories(query, { limit, temporalWeight });
       return results.map((r) => ({
         content: r.content,
-        category: r.category,
+        category: r.category ?? null,
         importance: r.importance,
         score: r.score ?? 0.5,
         semantic: r.semantic_score ?? 0.5,
