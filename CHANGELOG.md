@@ -2,7 +2,7 @@
 
 Docs: https://docs.openclaw.ai
 
-## v1.3.0 - Metrics Instrumentation (Unreleased)
+## v1.3.0 - Metrics Instrumentation (2026-02-17)
 
 ### Added
 
