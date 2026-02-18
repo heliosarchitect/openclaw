@@ -1,6 +1,23 @@
 {
   "pipeline_version": "1.0.0",
-  "active_tasks": [],
+  "active_tasks": [
+    {
+      "task_id": "task-005-predictive-intent",
+      "title": "Predictive Intent \u2014 Act Before Asked",
+      "phase": "5.1",
+      "started_at": "2026-02-18T15:47:21-05:00",
+      "current_stage": "deploy",
+      "stages_completed": ["requirements", "design", "document", "build", "security", "test"],
+      "artifacts": {
+        "requirements": "pipeline/task-005-predictive-intent/requirements.md",
+        "design": "pipeline/task-005-predictive-intent/design.md",
+        "documentation": "pipeline/task-005-predictive-intent/document.md",
+        "build": "pipeline/task-005-predictive-intent/build-report.md",
+        "security": "pipeline/task-005-predictive-intent/security.md",
+        "test": "pipeline/task-005-predictive-intent/test-report.md"
+      }
+    }
+  ],
   "completed_tasks": [
     {
       "task_id": "task-004-session-persistence",
@@ -122,11 +139,6 @@
   ],
   "next_task_id": 5,
   "queued_tasks": [
-    {
-      "task_id": "task-005-predictive-intent",
-      "title": "Predictive Intent \u2014 Act Before Asked",
-      "phase": "5.1"
-    },
     {
       "task_id": "task-006-self-healing",
       "title": "Self-Healing Infrastructure",

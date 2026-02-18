@@ -27,6 +27,13 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import type {
+  PredictBridgeMethods,
+  PredictiveIntentConfig,
+  Insight,
+  ActionRate,
+  InsightFeedback,
+} from "./predictive/types.js";
+import type {
   RestoredSessionContext,
   SessionPersistenceConfig,
   WorkingMemoryPin,
@@ -36,6 +43,22 @@ import { ContextExtractor } from "./hooks/context-extractor.js";
 import { EnforcementEngine, EnforcementLevel } from "./hooks/enforcement-engine.js";
 import { KnowledgeDiscovery } from "./hooks/knowledge-discovery.js";
 import { SOPEnhancer } from "./hooks/sop-enhancer.js";
+import { BriefingGenerator } from "./predictive/briefing-generator.js";
+import { AugurPaperAdapter } from "./predictive/data-sources/augur-paper-adapter.js";
+import { AugurRegimeAdapter } from "./predictive/data-sources/augur-regime-adapter.js";
+import { AugurSignalsAdapter } from "./predictive/data-sources/augur-signals-adapter.js";
+import { AugurTradesAdapter } from "./predictive/data-sources/augur-trades-adapter.js";
+import { CortexAtomsAdapter } from "./predictive/data-sources/cortex-atoms-adapter.js";
+import { CortexSessionAdapter } from "./predictive/data-sources/cortex-session-adapter.js";
+import { FleetAdapter } from "./predictive/data-sources/fleet-adapter.js";
+import { GitAdapter } from "./predictive/data-sources/git-adapter.js";
+import { OctoPrintAdapter } from "./predictive/data-sources/octoprint-adapter.js";
+import { PipelineAdapter } from "./predictive/data-sources/pipeline-adapter.js";
+import { DeliveryRouter } from "./predictive/delivery-router.js";
+import { FeedbackTracker } from "./predictive/feedback-tracker.js";
+import { focusModeTracker } from "./predictive/focus-mode-tracker.js";
+import { PatternLearner } from "./predictive/pattern-learner.js";
+import { PollingEngine } from "./predictive/polling-engine.js";
 import { HotTopicExtractor } from "./session/hot-topic-extractor.js";
 import { SessionPersistenceManager } from "./session/session-manager.js";
 
@@ -66,7 +89,7 @@ function generatePythonCall(type: string, data: any): string {
     case "cortex":
       return `writer.write_cortex_metric("${data.metric_name}", ${data.metric_value}, "${data.context || ""}")`;
     case "sop":
-      return `writer.write_sop_event("${data.sop_name}", ${data.tool_blocked}, "${data.tool_name || ""}", ${data.acknowledged || false})`;
+      return `writer.write_sop_event("${data.sop_name}", ${data.tool_blocked ? "True" : "False"}, "${data.tool_name || ""}", ${data.acknowledged ? "True" : "False"})`;
     case "synapse":
       return `writer.write_synapse_metric("${data.from_agent}", "${data.to_agent}", "${data.action}", "${data.thread_id || ""}", ${data.latency_ms || "None"})`;
     case "pipeline":
@@ -557,6 +580,13 @@ const cortexPlugin = {
       sessions_dir: Type.String({ default: "~/.openclaw/sessions" }),
       debug: Type.Boolean({ default: false }),
     }),
+    // PHASE 5: Predictive Intent
+    predictive_intent: Type.Optional(
+      Type.Object({
+        enabled: Type.Boolean({ default: true }),
+        debug: Type.Boolean({ default: false }),
+      }),
+    ),
   }),
 
   register(api: OpenClawPluginApi) {
@@ -697,6 +727,203 @@ const cortexPlugin = {
       api.logger.info?.("Cortex Pre-Action Hook System enabled");
     }
 
+    // PHASE 5: Initialize Predictive Intent system
+    let pollingEngine: PollingEngine | null = null;
+    let deliveryRouter: DeliveryRouter | null = null;
+    let feedbackTracker: FeedbackTracker | null = null;
+    let briefingGenerator: BriefingGenerator | null = null;
+    let patternLearner: PatternLearner | null = null;
+
+    const predictiveRawConfig = (rawConfig as Record<string, unknown>)?.predictive_intent as
+      | Record<string, unknown>
+      | undefined;
+    const predictEnabled = predictiveRawConfig?.enabled !== false;
+
+    if (predictEnabled) {
+      // Default config
+      const predictConfig: PredictiveIntentConfig = {
+        enabled: true,
+        poll_intervals_ms: {
+          "augur.signals": 60000,
+          "augur.trades": 300000,
+          "augur.regime": 300000,
+          "augur.paper": 900000,
+          "git.activity": 600000,
+          "fleet.health": 300000,
+          "octoprint.jobs": 300000,
+          "pipeline.state": 120000,
+          "cortex.session": 0,
+          "cortex.atoms": 600000,
+        },
+        staleness_thresholds_ms: {
+          "augur.signals": 120000,
+          "augur.trades": 600000,
+          "augur.regime": 600000,
+          "augur.paper": 1800000,
+          "git.activity": 1200000,
+          "fleet.health": 600000,
+          "octoprint.jobs": 600000,
+          "pipeline.state": 240000,
+          "cortex.session": 30000,
+          "cortex.atoms": 1200000,
+        },
+        urgency_thresholds: { high: 0.6, critical: 0.85 },
+        delivery: {
+          signal_channel: "signal",
+          focus_detection_window_ms: 90000,
+          focus_detection_min_calls: 3,
+          batch_window_ms: 300000,
+          duplicate_window_ms: 3600000,
+        },
+        anomaly_thresholds: {
+          augur_signal_stale_ms: 300000,
+          augur_loss_streak: 3,
+          augur_pnl_loss_pct: 0.02,
+          fleet_ssh_timeout_ms: 5000,
+          pipeline_stuck_ms: 3600000,
+        },
+        feedback: {
+          action_window_ms: 600000,
+          rate_increase_per_act: 0.1,
+          rate_decrease_per_ignore: 0.05,
+          min_observations: 20,
+          low_value_threshold: 0.1,
+        },
+        briefings: {
+          morning_hour_est: 6,
+          pre_sleep_idle_ms: 5400000,
+          suppression_window_ms: 14400000,
+        },
+        octoprint: {
+          host: "http://192.168.10.141",
+          secrets_file: "~/.secrets/octoprint.env",
+        },
+        debug: (predictiveRawConfig?.debug as boolean) ?? false,
+      };
+
+      // Create bridge adapter for predictive module
+      const predictBridge: PredictBridgeMethods = {
+        saveInsight: async (insight) => {
+          await bridge.predictSaveInsight(insight as unknown as Record<string, unknown>);
+        },
+        updateInsightState: async (id, state, extra) => {
+          await bridge.predictUpdateInsightState(id, state, extra);
+        },
+        getQueuedInsights: async () => {
+          const rows = await bridge.predictGetQueuedInsights();
+          return rows as unknown as Insight[];
+        },
+        saveFeedback: async (feedback) => {
+          await bridge.predictSaveFeedback(feedback as unknown as Record<string, unknown>);
+        },
+        getActionRate: async (sourceId, insightType) => {
+          const row = await bridge.predictGetActionRate(sourceId, insightType);
+          return row as unknown as ActionRate;
+        },
+        upsertActionRate: async (sourceId, insightType, rate, count, halved) => {
+          await bridge.predictUpsertActionRate(sourceId, insightType, rate, count, halved);
+        },
+        getFeedbackHistory: async (sourceId, insightType, actedOn, windowDays) => {
+          const rows = await bridge.predictGetFeedbackHistory(
+            sourceId,
+            insightType,
+            actedOn,
+            windowDays,
+          );
+          return rows as unknown as InsightFeedback[];
+        },
+        getRecentDelivered: async (limit) => {
+          const rows = await bridge.predictGetRecentDelivered(limit);
+          return rows as unknown as Insight[];
+        },
+        expireStaleInsights: async () => {
+          return await bridge.predictExpireStaleInsights();
+        },
+      };
+
+      // Configure focus mode tracker
+      focusModeTracker.configure(
+        predictConfig.delivery.focus_detection_window_ms,
+        predictConfig.delivery.focus_detection_min_calls,
+      );
+
+      // Create engine and register adapters
+      pollingEngine = new PollingEngine(predictBridge, predictConfig);
+      pollingEngine.registerAdapter(
+        new AugurSignalsAdapter(
+          predictConfig.poll_intervals_ms["augur.signals"],
+          predictConfig.staleness_thresholds_ms["augur.signals"],
+        ),
+      );
+      pollingEngine.registerAdapter(
+        new AugurTradesAdapter(
+          predictConfig.poll_intervals_ms["augur.trades"],
+          predictConfig.staleness_thresholds_ms["augur.trades"],
+        ),
+      );
+      pollingEngine.registerAdapter(
+        new AugurRegimeAdapter(
+          predictConfig.poll_intervals_ms["augur.regime"],
+          predictConfig.staleness_thresholds_ms["augur.regime"],
+        ),
+      );
+      pollingEngine.registerAdapter(
+        new AugurPaperAdapter(
+          predictConfig.poll_intervals_ms["augur.paper"],
+          predictConfig.staleness_thresholds_ms["augur.paper"],
+        ),
+      );
+      pollingEngine.registerAdapter(
+        new GitAdapter(
+          predictConfig.poll_intervals_ms["git.activity"],
+          predictConfig.staleness_thresholds_ms["git.activity"],
+        ),
+      );
+      pollingEngine.registerAdapter(
+        new FleetAdapter(
+          predictConfig.poll_intervals_ms["fleet.health"],
+          predictConfig.staleness_thresholds_ms["fleet.health"],
+          predictConfig.anomaly_thresholds.fleet_ssh_timeout_ms,
+        ),
+      );
+      pollingEngine.registerAdapter(
+        new OctoPrintAdapter(
+          predictConfig.octoprint.host,
+          predictConfig.octoprint.secrets_file,
+          predictConfig.poll_intervals_ms["octoprint.jobs"],
+          predictConfig.staleness_thresholds_ms["octoprint.jobs"],
+        ),
+      );
+      pollingEngine.registerAdapter(
+        new PipelineAdapter(
+          predictConfig.poll_intervals_ms["pipeline.state"],
+          predictConfig.staleness_thresholds_ms["pipeline.state"],
+          predictConfig.anomaly_thresholds.pipeline_stuck_ms,
+        ),
+      );
+
+      const cortexSessionAdapter = new CortexSessionAdapter(
+        predictConfig.staleness_thresholds_ms["cortex.session"],
+      );
+      pollingEngine.registerAdapter(cortexSessionAdapter);
+
+      const cortexAtomsAdapter = new CortexAtomsAdapter(
+        predictConfig.poll_intervals_ms["cortex.atoms"],
+        predictConfig.staleness_thresholds_ms["cortex.atoms"],
+      );
+      pollingEngine.registerAdapter(cortexAtomsAdapter);
+
+      deliveryRouter = new DeliveryRouter(predictBridge, predictConfig);
+      feedbackTracker = new FeedbackTracker(predictBridge, predictConfig);
+      briefingGenerator = new BriefingGenerator(
+        () => pollingEngine!.getAllReadings(),
+        predictConfig,
+      );
+      patternLearner = new PatternLearner(predictBridge, predictConfig);
+
+      api.logger.info?.("Cortex Predictive Intent system initialized");
+    }
+
     // Track last detected category for predictive prefetch
     let lastDetectedCategory: string | null = null;
 
@@ -814,6 +1041,12 @@ const cortexPlugin = {
       api.on(
         "before_tool_call",
         async (event, _ctx) => {
+          // PHASE 5: Tick focus mode tracker + record for briefing
+          if (pollingEngine) {
+            focusModeTracker.tick();
+            if (briefingGenerator) briefingGenerator.recordToolCall();
+          }
+
           // PHASE 4: Record tool call for hot topic extraction
           hotTopicExtractor.recordToolCall(
             event.toolName,
@@ -1866,6 +2099,62 @@ const cortexPlugin = {
     // =========================================================================
     // Tool: atom_create - Create atomic knowledge unit
     // =========================================================================
+    // =========================================================================
+    // Tool: cortex_predict — Query the Predictive Intent system (v2.1.0)
+    // =========================================================================
+    api.registerTool({
+      name: "cortex_predict",
+      label: "cortex_predict",
+      description:
+        "Query the Predictive Intent system for current insights. Returns scored, queued, or recently delivered insights relevant to the given context.",
+      parameters: Type.Object({
+        query: Type.Optional(Type.String({ description: "Filter insights by keyword" })),
+        sources: Type.Optional(Type.Array(Type.String(), { description: "Filter by source IDs" })),
+        urgency_min: Type.Optional(
+          Type.String({ description: "Minimum urgency: low, medium, high, critical" }),
+        ),
+        include_queue: Type.Optional(
+          Type.Boolean({ description: "Include queued (undelivered) insights" }),
+        ),
+        limit: Type.Optional(Type.Number({ description: "Max results (default: 5)" })),
+      }),
+      async execute(_toolCallId, params) {
+        if (!pollingEngine) {
+          return {
+            content: [{ type: "text", text: "Predictive Intent system is disabled." }],
+            details: { disabled: true },
+          };
+        }
+        const p = params as {
+          query?: string;
+          sources?: string[];
+          urgency_min?: string;
+          include_queue?: boolean;
+          limit?: number;
+        };
+        const result = pollingEngine.queryInsights(p);
+        const formatted =
+          result.insights.length === 0
+            ? "No insights match the query."
+            : result.insights
+                .map(
+                  (i) =>
+                    `[${i.urgency.toUpperCase()}] ${i.title}\n  ${i.body}\n  Source: ${i.source_id} | Confidence: ${(i.confidence * 100).toFixed(0)}%`,
+                )
+                .join("\n\n");
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `${formatted}\n\n(${result.sources_polled} sources polled, ${result.sources_stale.length} stale)`,
+            },
+          ],
+          details: result,
+        };
+      },
+    });
+
     api.registerTool(
       {
         name: "atom_create",
@@ -3727,8 +4016,37 @@ print(json.dumps({"count": len(result), "messages": result}))
             }
           }
         }
+
+        // PHASE 5: Start Predictive Intent polling
+        if (pollingEngine) {
+          try {
+            if (sessionId && briefingGenerator) {
+              briefingGenerator.setSessionId(sessionId);
+            }
+            await pollingEngine.start();
+            api.logger.info?.("Cortex Predictive Intent polling started");
+
+            // Check for morning brief
+            if (briefingGenerator) {
+              const morningBrief = briefingGenerator.checkMorningBrief();
+              if (morningBrief && deliveryRouter) {
+                await deliveryRouter.route(morningBrief);
+              }
+            }
+          } catch (err) {
+            api.logger.warn?.(`Predictive Intent start failed: ${err}`);
+          }
+        }
       },
       async stop() {
+        // PHASE 5: Stop Predictive Intent polling
+        if (pollingEngine) {
+          try {
+            await pollingEngine.stop();
+          } catch (err) {
+            api.logger.warn?.(`Predictive Intent stop failed: ${err}`);
+          }
+        }
         // PHASE 4: Capture final session state
         if (sessionManager && sessionId) {
           try {
