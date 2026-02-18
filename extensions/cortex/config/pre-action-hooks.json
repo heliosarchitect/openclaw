@@ -1,0 +1,208 @@
+{
+  "version": "2.0.0",
+  "metadata": {
+    "name": "Pre-Action Hook System Configuration",
+    "description": "Configuration for mandatory knowledge consultation before tool execution",
+    "author": "Build Specialist (Sub-Agent)",
+    "created": "2026-02-18",
+    "task_id": "task-003-pre-action-hooks"
+  },
+  "enforcement": {
+    "level": "category",
+    "description": "Global enforcement level: disabled, advisory, category, strict",
+    "cooldown_minutes": 5,
+    "emergency_bypass": false,
+    "max_knowledge_length": 4000,
+    "confidence_thresholds": {
+      "critical": 0.8,
+      "high": 0.7,
+      "medium": 0.5,
+      "low": 0.3,
+      "experimental": 0.2
+    }
+  },
+  "tool_interception": {
+    "enabled_tools": ["exec", "nodes", "browser", "message"],
+    "risk_assessment": {
+      "exec": {
+        "default_risk": "medium",
+        "critical_patterns": ["rm\\s+-rf", "dd\\s+if=", "mkfs\\.", "fdisk"],
+        "high_patterns": [
+          "git\\s+push\\s+--force",
+          "docker\\s+system\\s+prune",
+          "npm\\s+publish",
+          "sudo"
+        ],
+        "medium_patterns": ["git\\s+(push|pull|merge)", "docker\\s+(build|run)", "ssh"]
+      },
+      "nodes": {
+        "default_risk": "high"
+      },
+      "browser": {
+        "default_risk": "low"
+      },
+      "message": {
+        "default_risk": "low"
+      }
+    }
+  },
+  "category_rules": {
+    "process": "strict",
+    "security": "strict",
+    "credentials": "strict",
+    "gotchas": "category",
+    "technical": "advisory",
+    "infrastructure": "category",
+    "deployment": "category",
+    "general": "advisory"
+  },
+  "knowledge_discovery": {
+    "sop_patterns": [
+      {
+        "name": "project_specific",
+        "pattern": "/Projects/([^/]+)",
+        "sop_paths": ["~/Projects/{project}/{project}.ai.sop"],
+        "priority": 10,
+        "sections": ["preflight", "gotchas", "credentials"]
+      },
+      {
+        "name": "comfyui_operations",
+        "pattern": "comfyui|flux|8188",
+        "sop_paths": ["~/Projects/helios/extensions/cortex/sop/comfyui.ai.sop"],
+        "priority": 8,
+        "sections": ["preflight", "credentials", "troubleshooting"]
+      },
+      {
+        "name": "fleet_operations",
+        "pattern": "ssh|\\.163|\\.179|\\.141|fleet",
+        "sop_paths": ["~/Projects/helios/extensions/cortex/sop/fleet.ai.sop"],
+        "priority": 9,
+        "sections": ["preflight", "security", "credentials"]
+      },
+      {
+        "name": "docker_operations",
+        "pattern": "docker|compose|container",
+        "sop_paths": ["~/Projects/helios/extensions/cortex/sop/docker-deploy.ai.sop"],
+        "priority": 7,
+        "sections": ["preflight", "gotchas", "rollback"]
+      },
+      {
+        "name": "git_operations",
+        "pattern": "git\\s+(push|pull|merge|rebase|reset)",
+        "sop_paths": ["~/Projects/helios/extensions/cortex/sop/git.ai.sop"],
+        "priority": 6,
+        "sections": ["preflight", "merge", "rollback"]
+      },
+      {
+        "name": "database_operations",
+        "pattern": "sqlite|postgres|mysql|database",
+        "sop_paths": ["~/Projects/helios/extensions/cortex/sop/database.ai.sop"],
+        "priority": 8,
+        "sections": ["backup", "migration", "recovery"]
+      },
+      {
+        "name": "python_environment",
+        "pattern": "pip|conda|venv|virtualenv|poetry",
+        "sop_paths": ["~/Projects/helios/extensions/cortex/sop/python-env.ai.sop"],
+        "priority": 5,
+        "sections": ["setup", "dependencies", "troubleshooting"]
+      },
+      {
+        "name": "api_operations",
+        "pattern": "curl|wget|api|endpoint|postman",
+        "sop_paths": ["~/Projects/helios/extensions/cortex/sop/api.ai.sop"],
+        "priority": 4,
+        "sections": ["authentication", "rate_limits", "error_handling"]
+      },
+      {
+        "name": "network_diagnostics",
+        "pattern": "ping|traceroute|netstat|nslookup|dig",
+        "sop_paths": ["~/Projects/helios/extensions/cortex/sop/network.ai.sop"],
+        "priority": 3,
+        "sections": ["diagnostics", "common_issues"]
+      },
+      {
+        "name": "file_operations",
+        "pattern": "rsync|scp|find|tar|zip|backup",
+        "sop_paths": ["~/Projects/helios/extensions/cortex/sop/file-ops.ai.sop"],
+        "priority": 5,
+        "sections": ["permissions", "backup", "recovery"]
+      }
+    ],
+    "memory_categories": [
+      "process",
+      "technical",
+      "security",
+      "gotchas",
+      "credentials",
+      "infrastructure",
+      "deployment"
+    ],
+    "keyword_extraction": {
+      "command_patterns": [
+        {
+          "tool": "exec",
+          "patterns": [
+            "git\\s+(\\w+)",
+            "docker\\s+(\\w+)",
+            "npm\\s+(\\w+)",
+            "yarn\\s+(\\w+)",
+            "ssh\\s+[\\w@]*([^\\s]+)",
+            "cd\\s+([^\\s]+)"
+          ]
+        },
+        {
+          "tool": "nodes",
+          "patterns": ["action:\\s*(\\w+)", "node:\\s*([^\\s]+)"]
+        },
+        {
+          "tool": "browser",
+          "patterns": ["targetUrl:\\s*https?://([^/\\s]+)"]
+        }
+      ],
+      "project_detection": "/Projects/([^/\\s]+)",
+      "service_mapping": {
+        "comfyui": "comfyui",
+        "flux": "comfyui",
+        "docker": "docker",
+        "compose": "docker",
+        "git": "git",
+        "ssh": "ssh",
+        "augur": "augur",
+        "postgres": "database",
+        "sqlite": "database",
+        "mysql": "database"
+      }
+    }
+  },
+  "performance": {
+    "max_lookup_ms": 150,
+    "cache_ttl_minutes": 30,
+    "parallel_queries": true,
+    "max_sop_results": 3,
+    "max_memory_results": 20,
+    "max_memories_per_category": 5,
+    "cache_cleanup_interval_minutes": 60
+  },
+  "logging": {
+    "enabled": true,
+    "log_level": "info",
+    "log_injections": true,
+    "log_performance": true,
+    "log_cache_stats": false,
+    "metrics_enabled": true
+  },
+  "debugging": {
+    "verbose_context_extraction": false,
+    "log_sop_patterns": false,
+    "log_memory_queries": false,
+    "simulate_failures": false,
+    "bypass_cache": false
+  },
+  "emergency": {
+    "bypass_keywords": ["EMERGENCY_BYPASS", "CRITICAL_OVERRIDE"],
+    "bypass_timeout_minutes": 60,
+    "authorized_users": [],
+    "emergency_contact": "System Administrator"
+  }
+}

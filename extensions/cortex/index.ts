@@ -26,6 +26,10 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { CortexBridge, type STMItem, estimateTokens } from "./cortex-bridge.js";
+import { ContextExtractor } from "./hooks/context-extractor.js";
+import { EnforcementEngine, EnforcementLevel } from "./hooks/enforcement-engine.js";
+import { KnowledgeDiscovery } from "./hooks/knowledge-discovery.js";
+import { SOPEnhancer } from "./hooks/sop-enhancer.js";
 
 const execAsync = promisify(exec);
 
@@ -520,6 +524,19 @@ const cortexPlugin = {
     // PHASE 2: Delta Sync & Prefetch
     deltaSyncEnabled: Type.Boolean({ default: true }),
     prefetchEnabled: Type.Boolean({ default: true }),
+    // PHASE 3: Pre-Action Hook System
+    preActionHooks: Type.Object({
+      enabled: Type.Boolean({ default: true }),
+      enforcementLevel: Type.String({ default: "category" }),
+      interceptTools: Type.Array(Type.String(), {
+        default: ["exec", "nodes", "browser", "message"],
+      }),
+      cooldownMinutes: Type.Number({ default: 5, minimum: 1, maximum: 60 }),
+      maxLookupMs: Type.Number({ default: 150, minimum: 50, maximum: 500 }),
+      maxKnowledgeLength: Type.Number({ default: 4000, minimum: 1000, maximum: 10000 }),
+      confidenceThreshold: Type.Number({ default: 0.5, minimum: 0.1, maximum: 1.0 }),
+      emergencyBypass: Type.Boolean({ default: false }),
+    }),
   }),
 
   register(api: OpenClawPluginApi) {
@@ -540,6 +557,17 @@ const cortexPlugin = {
       truncateOldMemoriesTo: number;
       deltaSyncEnabled: boolean;
       prefetchEnabled: boolean;
+      // PHASE 3
+      preActionHooks: {
+        enabled: boolean;
+        enforcementLevel: string;
+        interceptTools: string[];
+        cooldownMinutes: number;
+        maxLookupMs: number;
+        maxKnowledgeLength: number;
+        confidenceThreshold: number;
+        emergencyBypass: boolean;
+      };
     }>;
 
     // Apply defaults (PHASE 1 & 2: Memory expansion)
@@ -562,6 +590,22 @@ const cortexPlugin = {
       // PHASE 2: Delta Sync & Prefetch
       deltaSyncEnabled: rawConfig.deltaSyncEnabled ?? true,
       prefetchEnabled: rawConfig.prefetchEnabled ?? true,
+      // PHASE 3: Pre-Action Hook System
+      preActionHooks: {
+        enabled: rawConfig.preActionHooks?.enabled ?? true,
+        enforcementLevel: rawConfig.preActionHooks?.enforcementLevel ?? "category",
+        interceptTools: rawConfig.preActionHooks?.interceptTools ?? [
+          "exec",
+          "nodes",
+          "browser",
+          "message",
+        ],
+        cooldownMinutes: rawConfig.preActionHooks?.cooldownMinutes ?? 5,
+        maxLookupMs: rawConfig.preActionHooks?.maxLookupMs ?? 150,
+        maxKnowledgeLength: rawConfig.preActionHooks?.maxKnowledgeLength ?? 4000,
+        confidenceThreshold: rawConfig.preActionHooks?.confidenceThreshold ?? 0.5,
+        emergencyBypass: rawConfig.preActionHooks?.emergencyBypass ?? false,
+      },
     };
 
     if (!config.enabled) {
@@ -578,6 +622,16 @@ const cortexPlugin = {
         truncateOldMemoriesTo: config.truncateOldMemoriesTo,
       },
     });
+
+    // PHASE 3: Initialize pre-action hook system
+    let knowledgeDiscovery: KnowledgeDiscovery | null = null;
+    let enforcementEngine: EnforcementEngine | null = null;
+
+    if (config.preActionHooks.enabled) {
+      knowledgeDiscovery = new KnowledgeDiscovery(bridge, api.logger);
+      enforcementEngine = new EnforcementEngine(api.logger);
+      api.logger.info?.("Cortex Pre-Action Hook System enabled");
+    }
 
     // Track last detected category for predictive prefetch
     let lastDetectedCategory: string | null = null;
@@ -669,200 +723,237 @@ const cortexPlugin = {
     }
 
     // =========================================================================
-    // Hook: before_tool_call - SOP Pre-Action Enforcement (v1.1.0)
-    // Intercepts infrastructure tool calls (exec, nodes) and loads relevant
-    // .ai.sop files. Returns block=true with SOP content so the agent sees
-    // preflight checklists and gotchas BEFORE executing.
+    // Hook: before_tool_call - Universal Pre-Action Enforcement (v2.0.0)
+    // Intercepts tool calls, performs parallel SOP + memory lookup, and
+    // blocks with knowledge injection when relevant. Replaces v1.1.0 SOP hook.
     // =========================================================================
     {
-      // SOP pattern matching: maps command/context patterns to SOP file paths
-      const SOP_PATTERNS: Array<{
-        pattern: RegExp;
-        sopPaths: string[];
-        label: string;
-      }> = [
-        {
-          pattern: /comfyui|flux|8188|diffusion|image.gen/i,
-          sopPaths: [join(homedir(), "Projects/ComfyUI/comfyui.ai.sop")],
-          label: "ComfyUI",
-        },
-        {
-          pattern: /ft.?991|hamlib|rigctl|radio|ham/i,
-          sopPaths: [join(homedir(), "Projects/lbf-ham-radio/ft991a.ai.sop")],
-          label: "FT-991A",
-        },
-        {
-          pattern: /augur|trading|paper_augur|coinbase|crypto.*bot/i,
-          sopPaths: [join(homedir(), "Projects/augur-trading/augur.ai.sop")],
-          label: "Augur",
-        },
-        {
-          pattern: /octoprint|3d.?print|prusa|\.141/i,
-          sopPaths: [join(homedir(), "Projects/helios/extensions/cortex/sop/3d-printing.ai.sop")],
-          label: "3D Printing",
-        },
-        {
-          pattern: /docker|container|compose/i,
-          sopPaths: [join(homedir(), "Projects/helios/extensions/cortex/sop/docker-deploy.ai.sop")],
-          label: "Docker Deploy",
-        },
-        {
-          pattern: /wazuh|security.*audit|hardening|firewall/i,
-          sopPaths: [
-            join(homedir(), "Projects/helios/extensions/cortex/sop/security-audit.ai.sop"),
-          ],
-          label: "Security",
-        },
-      ];
+      const contextExtractor = new ContextExtractor();
+      const sopEnhancer = new SOPEnhancer();
 
-      // Fleet host detection: any SSH to fleet machines triggers fleet SOP
-      const FLEET_PATTERN = /ssh\s|\.163|\.179|\.141|\.100|blackview|radio\.fleet|octopi/i;
-      const FLEET_SOP = join(homedir(), "Projects/lbf-infrastructure/fleet.ai.sop");
+      // Read-only commands should never be blocked
+      const READ_ONLY_PATTERN =
+        /^\s*(ls|cat|head|tail|grep|find|wc|stat|file|echo|pwd|which|type|test|diff|git\s+(log|tag|status|diff|show|branch)|systemctl\s+--user\s+(status|list|is-active)|journalctl|nvidia-smi|free|df|du|uptime|ps|top|htop)\b/i;
 
-      // Track recently injected SOPs to avoid spamming (per session)
-      const recentSOPInjections = new Map<string, number>();
-      const SOP_COOLDOWN_MS = 5 * 60 * 1000; // 5 minute cooldown per SOP
+      // Tools to intercept (configurable via config)
+      const interceptTools = new Set(config.preActionHooks?.interceptTools ?? ["exec", "nodes"]);
+
+      // Parse enforcement config
+      const enforcementConfig = {
+        level: (config.preActionHooks?.enforcementLevel ?? "category") as string,
+        cooldownMs: (config.preActionHooks?.cooldownMinutes ?? 5) * 60 * 1000,
+        maxKnowledgeLength: 4000,
+        emergencyBypass: false,
+        confidenceThreshold: 0.5,
+      };
 
       api.on(
         "before_tool_call",
         async (event, _ctx) => {
-          // Only intercept infrastructure tools
-          if (event.toolName !== "exec" && event.toolName !== "nodes") {
+          // Only intercept configured tools
+          if (!interceptTools.has(event.toolName)) {
             return;
           }
 
           try {
-            // Build context string from params
-            const paramStr = JSON.stringify(event.params).toLowerCase();
+            const startTime = Date.now();
 
-            // Read-only commands should never be blocked — just warn
-            const READ_ONLY_PATTERN =
-              /^\s*(ls|cat|head|tail|grep|find|wc|stat|file|echo|pwd|which|type|test|diff|git\s+(log|tag|status|diff|show|branch)|systemctl\s+--user\s+(status|list|is-active)|journalctl|nvidia-smi|free|df|du|uptime|ps|top|htop)\b/i;
+            // STEP 1: Extract context
+            const ctx = contextExtractor.extract(
+              event.toolName,
+              event.params as Record<string, unknown>,
+            );
+
+            // Read-only exec commands: pass through
             const commandStr = (event.params as { command?: string })?.command || "";
-            const isReadOnly = READ_ONLY_PATTERN.test(commandStr.trim());
-
-            // Collect matching SOPs
-            const matchedSOPs: Array<{ label: string; path: string }> = [];
-
-            // Check fleet pattern first
-            if (FLEET_PATTERN.test(paramStr)) {
-              matchedSOPs.push({ label: "Fleet Access", path: FLEET_SOP });
-            }
-
-            // Check specific service patterns
-            for (const { pattern, sopPaths, label } of SOP_PATTERNS) {
-              if (pattern.test(paramStr)) {
-                for (const sopPath of sopPaths) {
-                  matchedSOPs.push({ label, path: sopPath });
-                }
-              }
-            }
-
-            if (matchedSOPs.length === 0) {
-              // METRICS: Log SOP check - tool allowed (no matching SOPs)
+            if (event.toolName === "exec" && READ_ONLY_PATTERN.test(commandStr.trim())) {
               writeMetric("sop", {
-                sop_name: "no_sop_match",
+                sop_name: ctx.serviceType || "read_only_pass",
                 tool_blocked: false,
                 tool_name: event.toolName,
                 acknowledged: true,
-              }).catch(() => {}); // Async, don't wait
-              return; // No relevant SOPs
-            }
-
-            // Filter out recently injected SOPs (cooldown)
-            const now = Date.now();
-            const newSOPs = matchedSOPs.filter((s) => {
-              const lastInjected = recentSOPInjections.get(s.path);
-              return !lastInjected || now - lastInjected > SOP_COOLDOWN_MS;
-            });
-
-            if (newSOPs.length === 0) {
-              // METRICS: Log SOP check - tool allowed (SOPs in cooldown)
-              for (const sop of matchedSOPs) {
-                writeMetric("sop", {
-                  sop_name: sop.label.toLowerCase().replace(/\s+/g, "_") + ".ai.sop",
-                  tool_blocked: false,
-                  tool_name: event.toolName,
-                  acknowledged: true, // Cooldown implies previous acknowledgment
-                }).catch(() => {}); // Async, don't wait
-              }
-              return; // All SOPs recently shown
-            }
-
-            // Load SOP file contents
-            const sopContents: string[] = [];
-            for (const sop of newSOPs) {
-              try {
-                if (existsSync(sop.path)) {
-                  const content = await readFile(sop.path, "utf-8");
-                  // Extract just preflight and gotchas sections for brevity
-                  const preflight = extractYAMLSection(content, "preflight");
-                  const gotchas = extractYAMLSection(content, "gotchas");
-                  const credentials = extractYAMLSection(content, "credentials");
-
-                  let summary = `⚠️ SOP [${sop.label}]:`;
-                  if (preflight) summary += `\nPREFLIGHT:\n${preflight}`;
-                  if (gotchas) summary += `\nGOTCHAS:\n${gotchas}`;
-                  if (credentials) summary += `\nCREDENTIALS:\n${credentials}`;
-
-                  sopContents.push(summary);
-                  recentSOPInjections.set(sop.path, now);
-                }
-              } catch {
-                // SOP file unreadable, skip
-              }
-            }
-
-            if (sopContents.length === 0) {
+              }).catch(() => {});
               return;
             }
 
-            // For read-only commands: log the SOP match but DON'T block.
-            // Mark as injected so cooldown applies, then let execution proceed.
-            if (isReadOnly) {
-              api.logger.info?.(
-                `Cortex SOP: read-only pass-through for ${event.toolName} — ${newSOPs.map((s) => s.label).join(", ")}`,
-              );
-              for (const sop of newSOPs) {
-                writeMetric("sop", {
-                  sop_name: sop.label.toLowerCase().replace(/\s+/g, "_") + ".ai.sop",
-                  tool_blocked: false,
-                  tool_name: event.toolName,
-                  acknowledged: true,
-                }).catch(() => {});
-              }
-              return; // Allow execution
-            }
+            // STEP 2: Parallel SOP + memory lookup (with 150ms timeout)
+            const paramStr = JSON.stringify(event.params).toLowerCase();
 
-            // Block the tool call with SOP content as the reason
-            // The agent will see this, acknowledge the SOPs, and retry
-            const blockMessage =
-              `🛡️ CORTEX PRE-ACTION CHECK: ${newSOPs.length} SOP(s) apply to this operation.\n` +
-              `Review the following before proceeding:\n\n` +
-              sopContents.join("\n\n") +
-              `\n\n➡️ Acknowledge these checks and retry the command with any necessary adjustments.`;
+            const sopPromise = sopEnhancer.findMatches(paramStr);
+            const memPromise =
+              bridge && ctx.keywords.length > 0
+                ? bridge
+                    .searchMemoriesWithConfidence(
+                      ctx.keywords.join(" "),
+                      ["process", "technical", "security", "gotchas", "credentials"],
+                      enforcementConfig.confidenceThreshold,
+                      10,
+                    )
+                    .catch(() => [])
+                : Promise.resolve([]);
 
-            api.logger.info?.(
-              `Cortex SOP: blocked ${event.toolName} — ${newSOPs.map((s) => s.label).join(", ")}`,
+            const timeoutPromise = new Promise<"timeout">((resolve) =>
+              setTimeout(() => resolve("timeout"), 150),
             );
 
-            // METRICS: Log SOP block event (tamper-evident)
-            for (const sop of newSOPs) {
-              writeMetric("sop", {
-                sop_name: sop.label.toLowerCase().replace(/\s+/g, "_") + ".ai.sop",
-                tool_blocked: true,
-                tool_name: event.toolName,
-                acknowledged: false,
-              }).catch(() => {}); // Async, don't wait
+            const raceResult = await Promise.race([
+              Promise.all([sopPromise, memPromise]).then(([sops, mems]) => ({ sops, mems })),
+              timeoutPromise,
+            ]);
+
+            let sopMatches: Awaited<ReturnType<typeof sopEnhancer.findMatches>>;
+            let memMatches: Awaited<ReturnType<typeof bridge.searchMemoriesWithConfidence>>;
+
+            if (raceResult === "timeout") {
+              // Timeout: fall back to SOP-only (likely cached, fast)
+              api.logger.debug?.("Pre-action hook: knowledge lookup timed out");
+              sopMatches = await sopEnhancer.findMatches(paramStr);
+              memMatches = [];
+            } else {
+              sopMatches = raceResult.sops;
+              memMatches = raceResult.mems;
             }
+
+            const lookupMs = Date.now() - startTime;
+            const totalSources = sopMatches.length + memMatches.length;
+
+            // No knowledge found → allow
+            if (totalSources === 0) {
+              writeMetric("sop", {
+                sop_name: "no_match",
+                tool_blocked: false,
+                tool_name: event.toolName,
+                acknowledged: true,
+                knowledge_sources: 0,
+                lookup_time_ms: lookupMs,
+              }).catch(() => {});
+              return;
+            }
+
+            // STEP 3: Enforcement decision (delegate to engine if available)
+            if (enforcementEngine) {
+              const knowledgeResult = {
+                sopFiles: sopMatches.map((s) => ({
+                  ...s,
+                  label: s.label,
+                  path: s.path,
+                  content: s.content,
+                  priority: s.priority,
+                  matchedPattern: s.matchedPattern,
+                  sections: s.sections,
+                })),
+                memories: memMatches.map((m) => ({
+                  id: m.id,
+                  content: m.content,
+                  confidence: m.confidence,
+                  category: m.category,
+                  lastAccessed: m.last_accessed,
+                  accessCount: m.access_count,
+                })),
+                totalSources,
+                lookupTimeMs: lookupMs,
+                cacheHits: 0,
+              };
+
+              const knowledgeContext = {
+                toolName: event.toolName,
+                params: event.params as Record<string, unknown>,
+                keywords: ctx.keywords,
+                projectPath: ctx.projectPath,
+                serviceType: ctx.serviceType,
+                hostTarget: ctx.hostTarget,
+                workingDir: ctx.workingDir,
+                urlHost: ctx.urlHost,
+                commandType: ctx.commandType,
+                riskLevel: ctx.riskLevel,
+              };
+
+              const categoryRules = new Map<string, EnforcementLevel>([
+                ["process", EnforcementLevel.STRICT],
+                ["security", EnforcementLevel.STRICT],
+                ["credentials", EnforcementLevel.STRICT],
+                ["gotchas", EnforcementLevel.CATEGORY],
+                ["technical", EnforcementLevel.ADVISORY],
+                ["infrastructure", EnforcementLevel.CATEGORY],
+                ["general", EnforcementLevel.ADVISORY],
+              ]);
+
+              const decision = await enforcementEngine.shouldBlock(
+                knowledgeContext,
+                knowledgeResult,
+                {
+                  level:
+                    enforcementConfig.level === "strict"
+                      ? EnforcementLevel.STRICT
+                      : enforcementConfig.level === "advisory"
+                        ? EnforcementLevel.ADVISORY
+                        : enforcementConfig.level === "disabled"
+                          ? EnforcementLevel.DISABLED
+                          : EnforcementLevel.CATEGORY,
+                  categoryRules,
+                  cooldownMs: enforcementConfig.cooldownMs,
+                  confidenceThresholds: new Map([
+                    ["critical", 0.8],
+                    ["routine", 0.5],
+                  ]),
+                  emergencyBypass: enforcementConfig.emergencyBypass,
+                  maxKnowledgeLength: enforcementConfig.maxKnowledgeLength,
+                },
+              );
+
+              // METRICS
+              writeMetric("sop", {
+                sop_name: ctx.serviceType || "generic",
+                tool_blocked: decision.block,
+                tool_name: event.toolName,
+                acknowledged: !decision.block,
+                knowledge_sources: totalSources,
+                lookup_time_ms: lookupMs,
+              }).catch(() => {});
+
+              if (decision.block && decision.reason) {
+                api.logger.info?.(
+                  `Cortex Pre-Action: blocked ${event.toolName} — ${sopMatches.map((s) => s.label).join(", ")} + ${memMatches.length} memories (${lookupMs}ms)`,
+                );
+                return {
+                  block: true,
+                  blockReason: decision.reason,
+                };
+              }
+
+              return;
+            }
+
+            // Fallback: no enforcement engine (shouldn't happen but fail-open)
+            // Build simple block message from SOPs only
+            const sopContents = sopMatches.map((s) => `⚠️ SOP [${s.label}]:\n${s.content}`);
+
+            const blockMessage =
+              `🛡️ CORTEX PRE-ACTION CHECK: ${sopMatches.length} SOP(s) + ${memMatches.length} memory(ies) apply.\n` +
+              `Review the following before proceeding:\n\n` +
+              sopContents.join("\n\n") +
+              `\n\n➡️ Acknowledge these checks and retry the command.`;
+
+            writeMetric("sop", {
+              sop_name: ctx.serviceType || "generic",
+              tool_blocked: true,
+              tool_name: event.toolName,
+              acknowledged: false,
+              knowledge_sources: totalSources,
+              lookup_time_ms: lookupMs,
+            }).catch(() => {});
+
+            api.logger.info?.(
+              `Cortex Pre-Action (fallback): blocked ${event.toolName} — ${sopMatches.map((s) => s.label).join(", ")}`,
+            );
 
             return {
               block: true,
               blockReason: blockMessage,
             };
           } catch (err) {
-            api.logger.debug?.(`Cortex SOP hook error: ${err}`);
-            // Don't block on hook errors
+            api.logger.debug?.(`Cortex Pre-Action hook error: ${err}`);
+            // Fail-open: don't block on hook errors
             return;
           }
         },

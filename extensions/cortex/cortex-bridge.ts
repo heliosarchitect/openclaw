@@ -1237,6 +1237,64 @@ print(json.dumps(result))
   }
 
   /**
+   * Search memories with confidence filtering for pre-action hooks.
+   * Returns memories matching the query, filtered by categories and min confidence.
+   */
+  async searchMemoriesWithConfidence(
+    query: string,
+    categories: string[],
+    minConfidence: number,
+    limit: number = 20,
+  ): Promise<
+    Array<{
+      id: string;
+      content: string;
+      confidence: number;
+      category: string;
+      last_accessed: string;
+      access_count: number;
+    }>
+  > {
+    // Use existing search, then filter by confidence and category client-side
+    // (the Python layer doesn't natively support confidence filtering yet)
+    const allResults: Array<{
+      id: string;
+      content: string;
+      confidence: number;
+      category: string;
+      last_accessed: string;
+      access_count: number;
+    }> = [];
+
+    for (const cat of categories) {
+      try {
+        const results = await this.searchMemories(query, {
+          limit: Math.ceil(limit / categories.length) + 5,
+          category: cat,
+        });
+        for (const r of results) {
+          const confidence = (r as any).confidence ?? 0.5;
+          if (confidence >= minConfidence) {
+            allResults.push({
+              id: (r as any).id ?? (r as any)._id ?? "",
+              content: (r as any).content ?? "",
+              confidence,
+              category: cat,
+              last_accessed: (r as any).last_accessed ?? new Date().toISOString(),
+              access_count: (r as any).access_count ?? 0,
+            });
+          }
+        }
+      } catch {
+        // Category search failed, skip
+      }
+    }
+
+    // Sort by confidence desc, limit
+    return allResults.sort((a, b) => b.confidence - a.confidence).slice(0, limit);
+  }
+
+  /**
    * Add memory to embeddings database
    * PHASE 2B: Multi-category support
    */
