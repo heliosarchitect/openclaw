@@ -18,12 +18,51 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
  * This plugin ADDS capabilities without duplicating existing memory infrastructure.
  */
 import { Type } from "@sinclair/typebox";
+import { exec } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { promisify } from "node:util";
 import { CortexBridge, type STMItem, estimateTokens } from "./cortex-bridge.js";
+
+const execAsync = promisify(exec);
+
+// Metrics collection helper - calls Python metrics writer directly
+async function writeMetric(
+  type: "cortex" | "synapse" | "pipeline" | "sop",
+  data: any,
+): Promise<void> {
+  try {
+    const pythonCmd = `python3 -c "
+import sys
+sys.path.append('${join(homedir(), "Projects/helios/extensions/cortex/python")}')
+from metrics_writer import MetricsWriter
+writer = MetricsWriter()
+${generatePythonCall(type, data)}
+"`;
+    await execAsync(pythonCmd, { timeout: 1000 }); // 1 second timeout
+  } catch (error) {
+    // Metrics failure shouldn't break normal operation
+    console.warn("Metrics write failed:", error);
+  }
+}
+
+function generatePythonCall(type: string, data: any): string {
+  switch (type) {
+    case "cortex":
+      return `writer.write_cortex_metric("${data.metric_name}", ${data.metric_value}, "${data.context || ""}")`;
+    case "sop":
+      return `writer.write_sop_event("${data.sop_name}", ${data.tool_blocked}, "${data.tool_name || ""}", ${data.acknowledged || false})`;
+    case "synapse":
+      return `writer.write_synapse_metric("${data.from_agent}", "${data.to_agent}", "${data.action}", "${data.thread_id || ""}", ${data.latency_ms || "None"})`;
+    case "pipeline":
+      return `writer.write_pipeline_metric("${data.task_id}", "${data.stage}", "${data.result}", ${data.duration_ms || "None"})`;
+    default:
+      return "pass";
+  }
+}
 
 // Importance triggers for auto-capture
 const IMPORTANCE_TRIGGERS = [
@@ -714,6 +753,13 @@ const cortexPlugin = {
             }
 
             if (matchedSOPs.length === 0) {
+              // METRICS: Log SOP check - tool allowed (no matching SOPs)
+              writeMetric("sop", {
+                sop_name: "no_sop_match",
+                tool_blocked: false,
+                tool_name: event.toolName,
+                acknowledged: true,
+              }).catch(() => {}); // Async, don't wait
               return; // No relevant SOPs
             }
 
@@ -725,6 +771,15 @@ const cortexPlugin = {
             });
 
             if (newSOPs.length === 0) {
+              // METRICS: Log SOP check - tool allowed (SOPs in cooldown)
+              for (const sop of matchedSOPs) {
+                writeMetric("sop", {
+                  sop_name: sop.label.toLowerCase().replace(/\s+/g, "_") + ".ai.sop",
+                  tool_blocked: false,
+                  tool_name: event.toolName,
+                  acknowledged: true, // Cooldown implies previous acknowledgment
+                }).catch(() => {}); // Async, don't wait
+              }
               return; // All SOPs recently shown
             }
 
@@ -767,6 +822,16 @@ const cortexPlugin = {
             api.logger.info?.(
               `Cortex SOP: blocked ${event.toolName} — ${newSOPs.map((s) => s.label).join(", ")}`,
             );
+
+            // METRICS: Log SOP block event (tamper-evident)
+            for (const sop of newSOPs) {
+              writeMetric("sop", {
+                sop_name: sop.label.toLowerCase().replace(/\s+/g, "_") + ".ai.sop",
+                tool_blocked: true,
+                tool_name: event.toolName,
+                acknowledged: false,
+              }).catch(() => {}); // Async, don't wait
+            }
 
             return {
               block: true,
@@ -3216,6 +3281,13 @@ print(json.dumps({"count": len(result), "messages": result}))
           api.logger.debug?.(
             `Cortex: injected ${contextParts.length} tiers, ~${usedTokens}/${tokenBudget} tokens (dynamic budget)`,
           );
+
+          // METRICS: Log memory injection event (tamper-evident)
+          writeMetric("cortex", {
+            metric_name: "memory_injected",
+            metric_value: contextParts.length,
+            context: `tiers_${contextParts.length}_tokens_${usedTokens}`,
+          }).catch(() => {}); // Async, don't wait
 
           return {
             prependContext: contextParts.join("\n\n"),
