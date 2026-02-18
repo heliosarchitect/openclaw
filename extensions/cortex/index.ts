@@ -427,6 +427,36 @@ function calculateDynamicTokenBudget(prompt: string, baseTokens: number): number
   return Math.min(budget, 2500);
 }
 
+/**
+ * Extract a named section from a YAML-style .ai.sop file.
+ * Looks for top-level keys like "preflight:", "gotchas:", "credentials:"
+ * and returns the indented content below them.
+ */
+function extractYAMLSection(content: string, sectionName: string): string | null {
+  const lines = content.split("\n");
+  const sectionPattern = new RegExp(`^${sectionName}\\s*:`, "i");
+  let capturing = false;
+  const captured: string[] = [];
+
+  for (const line of lines) {
+    if (sectionPattern.test(line)) {
+      capturing = true;
+      continue;
+    }
+    if (capturing) {
+      // Stop at next top-level key (no indent, ends with colon)
+      if (/^\S/.test(line) && line.includes(":")) {
+        break;
+      }
+      captured.push(line);
+    }
+  }
+
+  if (captured.length === 0) return null;
+  const result = captured.join("\n").trim();
+  return result.length > 0 ? result : null;
+}
+
 const cortexPlugin: OpenClawPlugin = {
   id: "cortex",
   name: "Cortex Memory",
@@ -597,6 +627,159 @@ const cortexPlugin: OpenClawPlugin = {
         },
         { priority: 100 },
       ); // High priority to run before other hooks
+    }
+
+    // =========================================================================
+    // Hook: before_tool_call - SOP Pre-Action Enforcement (v1.1.0)
+    // Intercepts infrastructure tool calls (exec, nodes) and loads relevant
+    // .ai.sop files. Returns block=true with SOP content so the agent sees
+    // preflight checklists and gotchas BEFORE executing.
+    // =========================================================================
+    {
+      // SOP pattern matching: maps command/context patterns to SOP file paths
+      const SOP_PATTERNS: Array<{
+        pattern: RegExp;
+        sopPaths: string[];
+        label: string;
+      }> = [
+        {
+          pattern: /comfyui|flux|8188|diffusion|image.gen/i,
+          sopPaths: [join(homedir(), "Projects/ComfyUI/comfyui.ai.sop")],
+          label: "ComfyUI",
+        },
+        {
+          pattern: /ft.?991|hamlib|rigctl|radio|ham/i,
+          sopPaths: [join(homedir(), "Projects/lbf-ham-radio/ft991a.ai.sop")],
+          label: "FT-991A",
+        },
+        {
+          pattern: /augur|trading|paper_augur|coinbase|crypto.*bot/i,
+          sopPaths: [join(homedir(), "Projects/augur-trading/augur.ai.sop")],
+          label: "Augur",
+        },
+        {
+          pattern: /octoprint|3d.?print|prusa|\.141/i,
+          sopPaths: [join(homedir(), "Projects/helios/extensions/cortex/sop/3d-printing.ai.sop")],
+          label: "3D Printing",
+        },
+        {
+          pattern: /docker|container|compose/i,
+          sopPaths: [join(homedir(), "Projects/helios/extensions/cortex/sop/docker-deploy.ai.sop")],
+          label: "Docker Deploy",
+        },
+        {
+          pattern: /wazuh|security.*audit|hardening|firewall/i,
+          sopPaths: [
+            join(homedir(), "Projects/helios/extensions/cortex/sop/security-audit.ai.sop"),
+          ],
+          label: "Security",
+        },
+      ];
+
+      // Fleet host detection: any SSH to fleet machines triggers fleet SOP
+      const FLEET_PATTERN = /ssh\s|\.163|\.179|\.141|\.100|blackview|radio\.fleet|octopi/i;
+      const FLEET_SOP = join(homedir(), "Projects/lbf-infrastructure/fleet.ai.sop");
+
+      // Track recently injected SOPs to avoid spamming (per session)
+      const recentSOPInjections = new Map<string, number>();
+      const SOP_COOLDOWN_MS = 5 * 60 * 1000; // 5 minute cooldown per SOP
+
+      api.on(
+        "before_tool_call",
+        async (event, _ctx) => {
+          // Only intercept infrastructure tools
+          if (event.toolName !== "exec" && event.toolName !== "nodes") {
+            return;
+          }
+
+          try {
+            // Build context string from params
+            const paramStr = JSON.stringify(event.params).toLowerCase();
+
+            // Collect matching SOPs
+            const matchedSOPs: Array<{ label: string; path: string }> = [];
+
+            // Check fleet pattern first
+            if (FLEET_PATTERN.test(paramStr)) {
+              matchedSOPs.push({ label: "Fleet Access", path: FLEET_SOP });
+            }
+
+            // Check specific service patterns
+            for (const { pattern, sopPaths, label } of SOP_PATTERNS) {
+              if (pattern.test(paramStr)) {
+                for (const sopPath of sopPaths) {
+                  matchedSOPs.push({ label, path: sopPath });
+                }
+              }
+            }
+
+            if (matchedSOPs.length === 0) {
+              return; // No relevant SOPs
+            }
+
+            // Filter out recently injected SOPs (cooldown)
+            const now = Date.now();
+            const newSOPs = matchedSOPs.filter((s) => {
+              const lastInjected = recentSOPInjections.get(s.path);
+              return !lastInjected || now - lastInjected > SOP_COOLDOWN_MS;
+            });
+
+            if (newSOPs.length === 0) {
+              return; // All SOPs recently shown
+            }
+
+            // Load SOP file contents
+            const sopContents: string[] = [];
+            for (const sop of newSOPs) {
+              try {
+                if (existsSync(sop.path)) {
+                  const content = await readFile(sop.path, "utf-8");
+                  // Extract just preflight and gotchas sections for brevity
+                  const preflight = extractYAMLSection(content, "preflight");
+                  const gotchas = extractYAMLSection(content, "gotchas");
+                  const credentials = extractYAMLSection(content, "credentials");
+
+                  let summary = `⚠️ SOP [${sop.label}]:`;
+                  if (preflight) summary += `\nPREFLIGHT:\n${preflight}`;
+                  if (gotchas) summary += `\nGOTCHAS:\n${gotchas}`;
+                  if (credentials) summary += `\nCREDENTIALS:\n${credentials}`;
+
+                  sopContents.push(summary);
+                  recentSOPInjections.set(sop.path, now);
+                }
+              } catch {
+                // SOP file unreadable, skip
+              }
+            }
+
+            if (sopContents.length === 0) {
+              return;
+            }
+
+            // Block the tool call with SOP content as the reason
+            // The agent will see this, acknowledge the SOPs, and retry
+            const blockMessage =
+              `🛡️ CORTEX PRE-ACTION CHECK: ${newSOPs.length} SOP(s) apply to this operation.\n` +
+              `Review the following before proceeding:\n\n` +
+              sopContents.join("\n\n") +
+              `\n\n➡️ Acknowledge these checks and retry the command with any necessary adjustments.`;
+
+            api.logger.info?.(
+              `Cortex SOP: blocked ${event.toolName} — ${newSOPs.map((s) => s.label).join(", ")}`,
+            );
+
+            return {
+              block: true,
+              blockReason: blockMessage,
+            };
+          } catch (err) {
+            api.logger.debug?.(`Cortex SOP hook error: ${err}`);
+            // Don't block on hook errors
+            return;
+          }
+        },
+        { priority: 90 }, // High priority but below STM fast path
+      );
     }
 
     // =========================================================================

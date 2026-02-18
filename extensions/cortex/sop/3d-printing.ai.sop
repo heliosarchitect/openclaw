@@ -1,0 +1,128 @@
+# 3D Printing — AI Standard Operating Procedure
+# Spec: https://github.com/heliosarchitect/helios/extensions/cortex/sop/AI_SOP_SPEC.md
+
+meta:
+  name: 3D Printing Operations
+  version: "1.0.0"
+  repo: ~/Projects/lbf-desk-bot
+  hosts: [octopi]
+  updated: "2026-02-17"
+
+preflight:
+  - id: check-print-status
+    action: Check if printer is already running a job
+    command: curl -s http://octopi.fleet.wood:5000/api/job | python3 -c "import json,sys; d=json.load(sys.stdin); print('State:', d['state'])"
+    reason: "Don't interfere with active prints"
+
+  - id: verify-filament
+    action: Check filament is loaded and bed is clear
+    reason: "Manual verification required — printer sensors limited"
+
+  - id: never-cancel-approval
+    action: "NEVER cancel prints without explicit user approval"
+    reason: "Print cancellation wastes materials and time. User must approve."
+
+hosts:
+  - name: octopi
+    ip: 192.168.10.141
+    port: 2222
+    user: bonsaihorn
+    services: [octoprint, docker]
+    env: "OctoPrint venv"
+    gpu: "none"
+    gotchas:
+      - "OctoPrint web UI on port 5000"
+      - "Prusa MK4 connected via USB"
+      - "ARM-based Pi, limited processing power"
+      - "Current project: desk bot v2 chassis"
+      - "SSH disconnect doesn't affect OctoPrint/print jobs"
+
+commands:
+  status: "curl -s http://octopi.fleet.wood:5000/api/job"
+  printer-status: "curl -s http://octopi.fleet.wood:5000/api/printer"
+  start-print: "curl -X POST http://octopi.fleet.wood:5000/api/job -d '{\"command\": \"start\"}' -H 'Content-Type: application/json'"
+  pause-print: "curl -X POST http://octopi.fleet.wood:5000/api/job -d '{\"command\": \"pause\", \"action\": \"pause\"}' -H 'Content-Type: application/json'"
+  cancel-print: "curl -X POST http://octopi.fleet.wood:5000/api/job -d '{\"command\": \"cancel\"}' -H 'Content-Type: application/json'"
+  upload-gcode: "curl -X POST -F 'file=@{gcode_file}' http://octopi.fleet.wood:5000/api/files/local"
+  list-files: "curl -s http://octopi.fleet.wood:5000/api/files"
+  temperature: "curl -s http://octopi.fleet.wood:5000/api/printer/tool"
+
+gotchas:
+  - id: no-cancel-without-approval
+    description: "Automatically canceling prints wastes filament and ruins work-in-progress"
+    fix: "Always ask user permission before canceling any print job, regardless of status"
+    learned: "2026-02-17"
+
+  - id: usb-disconnect
+    description: "USB cable disconnection during print causes job failure with no recovery"
+    fix: "Check printer connection status before starting prints, secure USB cable"
+    learned: "2026-02-17"
+
+  - id: bed-leveling
+    description: "First layer adhesion failures often due to bed leveling issues on Prusa MK4"
+    fix: "Run mesh bed leveling before critical prints, especially after moving printer"
+    learned: "2026-02-17"
+
+  - id: temperature-monitoring
+    description: "Hotend/bed temperature fluctuations indicate hardware issues or thermal runaway"
+    fix: "Monitor temperature curves during first 10 minutes of print for stability"
+    learned: "2026-02-17"
+
+  - id: filament-runout
+    description: "Prusa MK4 filament sensor can give false positives if filament path is bent"
+    fix: "Verify physical filament presence, not just sensor status"
+    learned: "2026-02-17"
+
+  - id: gcode-upload-size
+    description: "Large gcode files (>50MB) can timeout during upload to OctoPrint"
+    fix: "Split large prints or use local file transfer to Pi, then import"
+    learned: "2026-02-17"
+
+credentials:
+  - name: OctoPrint API Key
+    env: OCTOPRINT_API_KEY
+    store: 1password
+    vault: "op://Personal/OctoPrint/api_key"
+    required: true
+    check: "curl -s -H 'X-Api-Key: $OCTOPRINT_API_KEY' http://octopi.fleet.wood:5000/api/version"
+    notes: "Generated in OctoPrint Settings → API"
+
+  - name: SSH Keys
+    env: SSH_AUTH_SOCK
+    store: env
+    required: true
+    check: "ssh-add -l"
+    notes: "SSH keys in ~/.ssh/ for Pi access"
+
+dependencies:
+  - name: octoprint
+    type: service
+    required: true
+    notes: "3D printer management web interface"
+
+  - name: prusa-mk4
+    type: hardware
+    required: true
+    notes: "Prusa MK4 3D printer connected via USB"
+
+  - name: pla-filament
+    type: hardware
+    required: true
+    notes: "PLA filament loaded and feeding properly"
+
+alerts:
+  - condition: "Print job failed"
+    severity: warning
+    action: "Check printer status, save gcode for retry analysis"
+
+  - condition: "Temperature above 280°C hotend or above 100°C bed"
+    severity: critical
+    action: "Emergency stop printer, investigate thermal runaway"
+
+  - condition: "Print progress stuck at same percentage > 30min"
+    severity: warning
+    action: "Check USB connection and printer status"
+
+  - condition: "Filament sensor triggered during active print"
+    severity: critical
+    action: "Pause print immediately, verify filament status before resume"

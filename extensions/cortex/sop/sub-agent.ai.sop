@@ -1,0 +1,75 @@
+# Sub-Agent Management — AI Standard Operating Procedure
+# Spec: https://github.com/heliosarchitect/helios/extensions/cortex/sop/AI_SOP_SPEC.md
+
+meta:
+  name: Sub-Agent Management
+  version: "1.0.0"
+  repo: ~/Projects/helios/extensions/cortex
+  hosts: [giggletits]
+  updated: "2026-02-17"
+
+preflight:
+  - id: check-model-parameter
+    action: "NEVER pass model parameter to sessions_spawn"
+    reason: "Default is Opus per Matthew's directive. Only change if explicitly requested."
+
+  - id: check-synapse
+    action: Use synapse for inter-agent coordination
+    command: synapse action=inbox
+    reason: "Synapse is the standard coordination path for all inter-agent work"
+
+commands:
+  spawn: 'sessions_spawn session={label} label="{description}" task="{task}"'
+  status: "sessions list"
+  message: 'synapse action=send to={agent_id} subject="{subject}" body="{message}"'
+  inbox: "synapse action=inbox"
+  coordinate: 'synapse action=send to={target_agent} priority={info|action|urgent}'
+
+gotchas:
+  - id: no-model-param
+    description: "Passing model parameter to sessions_spawn overrides the default (Opus) which Matthew has explicitly set as preferred"
+    fix: "Never pass model parameter unless Matthew explicitly requests a different model"
+    learned: "2026-02-17"
+
+  - id: no-reply-announce
+    description: "When sub-agent completion is announced, replying with summaries confuses Matthew because it replies to unrelated messages"
+    fix: "Always reply NO_REPLY to sub-agent completion announcements. Share results naturally during heartbeats when relevant."
+    learned: "2026-02-17"
+
+  - id: check-results
+    description: "Sub-agent results should be checked during heartbeats and shared naturally in conversation only when they matter to current context"
+    fix: "Poll sub-agent status during routine checks, integrate findings organically into conversation flow"
+    learned: "2026-02-17"
+
+  - id: synapse-coordination
+    description: "Direct session messaging bypasses the coordination layer that tracks inter-agent communication"
+    fix: "Use synapse for all inter-agent messaging with proper threading and priority"
+    learned: "2026-02-17"
+
+credentials:
+  - name: OpenClaw Session Management
+    env: OPENCLAW_SESSION_TOKEN
+    store: env
+    required: true
+    check: "echo $OPENCLAW_SESSION_TOKEN | head -c4"
+    notes: "Managed by OpenClaw runtime, no manual setup needed"
+
+dependencies:
+  - name: synapse
+    type: service
+    required: true
+    notes: "Inter-agent messaging system for coordination"
+
+  - name: sessions
+    type: service  
+    required: true
+    notes: "OpenClaw session management for sub-agent spawning"
+
+alerts:
+  - condition: "Model parameter passed to sessions_spawn"
+    severity: warning
+    action: "Block the spawn and remind about default model policy"
+
+  - condition: "Sub-agent completion announced"
+    severity: info
+    action: "Reply NO_REPLY automatically, check results during next heartbeat"

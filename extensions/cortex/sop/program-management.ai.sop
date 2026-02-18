@@ -1,0 +1,94 @@
+# Program Management — AI Standard Operating Procedure
+# Spec: https://github.com/heliosarchitect/helios/extensions/cortex/sop/AI_SOP_SPEC.md
+
+meta:
+  name: LBF Program Management
+  version: "1.0.0"
+  repo: ~/Projects/lbf-enterprise
+  hosts: [giggletits]
+  updated: "2026-02-17"
+
+preflight:
+  - id: check-existing-tasks
+    action: Always check existing tasks before creating duplicates
+    command: lbf action=list_tasks project_id={project_id}
+    reason: "Prevents duplicate task creation in the pipeline"
+
+  - id: verify-pipeline-stage
+    action: Verify target pipeline stage is valid
+    check: "stage must be one of: backlog, spec, build, verify, validate, deploy, done"
+    reason: "Invalid stages break the workflow progression"
+
+hosts:
+  - name: giggletits
+    ip: 192.168.10.100
+    port: 2222
+    user: bonsaihorn
+    services: [lbf-enterprise]
+    env: "python3 (system)"
+    gpu: "none"
+
+commands:
+  list-programs: "lbf action=list_programs"
+  list-projects: "lbf action=list_projects program_id={id}"
+  list-tasks: "lbf action=list_tasks project_id={id}"
+  create-task: 'lbf action=create_task project_id={id} title="{title}" description="{desc}" priority={critical|high|medium|low} stage={stage}'
+  move-task: "lbf action=move_task task_id={id} stage={new_stage}"
+  update-task: 'lbf action=update_task task_id={id} title="{title}" description="{desc}" priority={priority} assigned_to="{user}"'
+  get-task: "lbf action=get_task task_id={id}"
+  delete-task: "lbf action=delete_task task_id={id}"
+  fleet-status: "lbf action=itsm_status"
+  sla-metrics: "lbf action=itsm_sla days={30}"
+
+gotchas:
+  - id: pipeline-order
+    description: "Tasks must flow through pipeline stages in order: backlog → spec → build → verify → validate → deploy → done"
+    fix: "Don't skip stages. Each represents a quality gate."
+    learned: "2026-02-17"
+
+  - id: duplicate-tasks
+    description: "Creating tasks without checking existing ones leads to duplicate work items in the same project"
+    fix: "Always run list_tasks for the project first, search for similar titles/descriptions"
+    learned: "2026-02-17"
+
+  - id: orphan-tasks
+    description: "Tasks without clear ownership or deadlines stall in backlog indefinitely"
+    fix: "Assign owner and set priority when creating. Use assigned_to field."
+    learned: "2026-02-17"
+
+  - id: stage-skipping
+    description: "Moving tasks directly from backlog to deploy bypasses quality gates"
+    fix: "Enforce pipeline progression. Only allow adjacent stage moves."
+    learned: "2026-02-17"
+
+credentials:
+  - name: LBF API Token
+    env: LBF_API_TOKEN
+    store: env
+    required: true
+    check: "echo $LBF_API_TOKEN | head -c8"
+    notes: "Enterprise task board authentication"
+
+dependencies:
+  - name: lbf-enterprise
+    type: service
+    required: true
+    notes: "Task board backend service"
+
+  - name: postgresql
+    type: service
+    required: true
+    notes: "Task data persistence"
+
+alerts:
+  - condition: "Task stuck in same stage > 7 days"
+    severity: warning
+    action: "Flag for review, check if blocked or abandoned"
+
+  - condition: "Critical priority task not in build+ stage within 24h"
+    severity: critical
+    action: "Escalate to program owner"
+
+  - condition: "SLA below 85%"
+    severity: warning
+    action: "Generate bottleneck analysis report"

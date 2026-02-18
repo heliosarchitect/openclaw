@@ -1,0 +1,161 @@
+# Daily Operations — AI Standard Operating Procedure
+# Spec: https://github.com/heliosarchitect/helios/extensions/cortex/sop/AI_SOP_SPEC.md
+
+meta:
+  name: Daily Operations & Monitoring
+  version: "1.0.0"
+  repo: ~/Projects/helios/extensions/cortex
+  hosts: [giggletits, blackview, radio.fleet.wood, octopi]
+  updated: "2026-02-17"
+
+preflight:
+  - id: check-time
+    action: Verify system time is synchronized across fleet
+    command: "for host in giggletits blackview radio.fleet.wood octopi; do ssh $host 'date'; done"
+    reason: "Time drift breaks log correlation and certificate validation"
+
+  - id: verify-connectivity
+    action: Ping all fleet hosts to ensure network connectivity
+    command: "for ip in .100 .163 .179 .141; do ping -c1 192.168.10$ip; done"
+    reason: "Network issues prevent remote monitoring and management"
+
+hosts:
+  - name: giggletits
+    ip: 192.168.10.100
+    port: 2222
+    user: bonsaihorn
+    services: [helios, augur, lbf-enterprise]
+    env: "system"
+    gpu: "none"
+    gotchas:
+      - "Primary control host — critical for all operations"
+      - "AUGUR trading system runs here"
+
+  - name: blackview
+    ip: 192.168.10.163
+    port: 2222
+    user: bonsaihorn
+    services: [comfyui, ollama, wazuh-manager]
+    env: "conda environments"
+    gpu: "NVIDIA GeForce RTX 5090 32GB"
+    gotchas:
+      - "GPU workstation — resource contention between services"
+      - "SIEM manager — security monitoring critical"
+
+  - name: radio.fleet.wood
+    ip: 192.168.10.179
+    port: 2222
+    user: bonsaihorn
+    services: [ft991a-control]
+    env: "node"
+    gpu: "none"
+    gotchas:
+      - "Ham radio control — FCC compliance monitoring"
+
+  - name: octopi
+    ip: 192.168.10.141
+    port: 2222
+    user: bonsaihorn
+    services: [octoprint]
+    env: "system"
+    gpu: "none"
+    gotchas:
+      - "3D printer control — physical safety monitoring"
+
+commands:
+  heartbeat: "echo 'Fleet heartbeat:'; for h in giggletits blackview radio.fleet.wood octopi; do echo -n \"$h: \"; ssh $h 'uptime' | cut -d, -f1; done"
+  augur-report: "cd ~/Projects/augur && python3 augur_eod_report.py"
+  disk-check: "for h in giggletits blackview radio.fleet.wood octopi; do echo \"$h:\"; ssh $h 'df -h / | tail -1'; done"
+  memory-check: "for h in giggletits blackview radio.fleet.wood octopi; do echo \"$h:\"; ssh $h 'free -m | grep Mem'; done"
+  service-status: "for h in giggletits blackview radio.fleet.wood octopi; do echo \"$h services:\"; ssh $h 'systemctl --failed'; done"
+  backup-verify: "ls -la ~/backups/ | grep $(date +%Y-%m-%d)"
+  log-errors: "ssh blackview 'grep ERROR /var/log/wazuh/*.log | tail -10'"
+
+gotchas:
+  - id: augur-weekly-reset
+    description: "AUGUR trading system needs weekly reset to prevent memory leaks and refresh market data"
+    fix: "Schedule AUGUR restart every Sunday night, verify clean startup Monday morning"
+    learned: "2026-02-17"
+
+  - id: gpu-memory-leak
+    description: "ComfyUI and Ollama can leak GPU VRAM over time, causing OOM errors"
+    fix: "Monitor nvidia-smi during daily check, restart services if VRAM usage abnormal"
+    learned: "2026-02-17"
+
+  - id: disk-space-creep
+    description: "Log files and temporary data gradually consume disk space without cleanup"
+    fix: "Weekly cleanup of /tmp/, log rotation, docker system prune"
+    learned: "2026-02-17"
+
+  - id: backup-silent-fail
+    description: "Backup scripts can fail silently, leaving gaps in backup coverage"
+    fix: "Daily verification that backup files exist with current date stamps"
+    learned: "2026-02-17"
+
+  - id: network-partition
+    description: "Individual hosts can become unreachable due to network issues without obvious symptoms"
+    fix: "Daily ping test to all fleet hosts, investigate any failures"
+    learned: "2026-02-17"
+
+credentials:
+  - name: SSH Keys
+    env: SSH_AUTH_SOCK
+    store: env
+    required: true
+    check: "ssh-add -l"
+    notes: "SSH keys in ~/.ssh/ for fleet access"
+
+  - name: AUGUR Database
+    env: AUGUR_DB_URL
+    store: env
+    required: true
+    check: "echo $AUGUR_DB_URL | head -c10"
+    notes: "PostgreSQL connection for trading data"
+
+  - name: Backup Storage
+    env: BACKUP_DESTINATION
+    store: env
+    required: true
+    check: "ls $BACKUP_DESTINATION"
+    notes: "Network storage or cloud backup target"
+
+dependencies:
+  - name: ssh
+    type: package
+    required: true
+    notes: "Remote access to all fleet hosts"
+
+  - name: ping
+    type: package
+    required: true
+    notes: "Network connectivity testing"
+
+  - name: cron
+    type: service
+    required: true
+    notes: "Scheduled task execution"
+
+alerts:
+  - condition: "Any fleet host unreachable > 5 minutes"
+    severity: critical
+    action: "Investigate network connectivity, check host status"
+
+  - condition: "Disk usage > 85% on any host"
+    severity: warning
+    action: "Clean up logs, temporary files, old backups"
+
+  - condition: "AUGUR daily report generation fails"
+    severity: warning
+    action: "Check database connectivity, restart AUGUR services"
+
+  - condition: "Memory usage > 90% on any host"
+    severity: critical
+    action: "Identify memory-intensive processes, restart if necessary"
+
+  - condition: "Systemctl shows failed services"
+    severity: warning
+    action: "Investigate failed services, restart or fix configuration"
+
+  - condition: "Backup verification fails"
+    severity: critical
+    action: "Check backup scripts, storage availability, retry manually"

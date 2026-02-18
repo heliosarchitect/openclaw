@@ -1,0 +1,119 @@
+# Software Lifecycle — AI Standard Operating Procedure
+# Spec: https://github.com/heliosarchitect/helios/extensions/cortex/sop/AI_SOP_SPEC.md
+
+meta:
+  name: Software Lifecycle Management
+  version: "1.0.0"
+  repo: ~/Projects/helios/extensions/cortex
+  hosts: [giggletits]
+  updated: "2026-02-17"
+
+preflight:
+  - id: verify-git-tags
+    action: "Verify version with git tag, NOT memory"
+    command: "cd {repo} && git tag --sort=-v:refname | head -5"
+    reason: "Memory can be stale. Git tags are source of truth for releases."
+
+  - id: check-registry-update
+    action: Check if Google Sheet registry needs updating
+    reason: "Registry (ID: 1mWWhO_RP3SIc-Xo17QY4QLCEdKa3iIUN5VpAwxONpKs) must be updated on every version bump"
+
+  - id: check-semver
+    action: Verify semver format for LBF projects
+    check: "Version format: vX.Y.Z (e.g., v0.1.0, v1.2.3)"
+    reason: "LBF projects use semantic versioning, upstream OpenClaw uses date-based"
+
+hosts:
+  - name: giggletits
+    ip: 192.168.10.100
+    port: 2222
+    user: bonsaihorn
+    services: [git, gog]
+    env: "system"
+    gpu: "none"
+
+commands:
+  check-version: "cd {repo} && git tag --sort=-v:refname | head -5"
+  create-branch: "cd {repo} && git checkout -b {branch-name}"
+  tag-version: "cd {repo} && git tag v{version} && git push origin v{version}"
+  release-pr: "cd {repo} && gh pr create --title 'Release v{version}' --body 'Release preparation for v{version}'"
+  update-registry: "gog sheets update {sheet_id} {range} {values}"
+  check-status: "cd {repo} && git status --porcelain"
+  push-tags: "cd {repo} && git push --tags"
+
+gotchas:
+  - id: memory-vs-git
+    description: "Asserting versions from memory when git tags tell a different story leads to incorrect release planning"
+    fix: "Always run git tag command to verify actual tagged versions before asserting project state"
+    learned: "2026-02-17"
+
+  - id: registry-lag
+    description: "Version bumps without registry updates create inconsistency between actual releases and tracking system"
+    fix: "Update Google Sheet registry immediately after tagging, before announcing release"
+    learned: "2026-02-17"
+
+  - id: semver-vs-date
+    description: "LBF projects use semver (v1.2.3), upstream OpenClaw extensions use date-based (v2026.2.17)"
+    fix: "Check project ownership. LBF = semver, upstream contributions = date-based"
+    learned: "2026-02-17"
+
+  - id: orphan-tags
+    description: "Creating git tags locally without pushing leaves remote out of sync"
+    fix: "Always git push --tags or git push origin {tag} after local tagging"
+    learned: "2026-02-17"
+
+  - id: dirty-release
+    description: "Tagging releases with uncommitted changes creates unclear version boundaries"
+    fix: "Ensure git status --porcelain is clean before tagging releases"
+    learned: "2026-02-17"
+
+credentials:
+  - name: GitHub CLI Auth
+    env: GITHUB_TOKEN
+    store: env
+    required: true
+    check: "gh auth status"
+    notes: "Run 'gh auth login' for interactive setup"
+
+  - name: Google Sheets API
+    env: GOOGLE_APPLICATION_CREDENTIALS
+    store: env
+    required: true
+    check: "gog auth status"
+    notes: "gog auth for Google Sheets API access. Sheet ID: 1mWWhO_RP3SIc-Xo17QY4QLCEdKa3iIUN5VpAwxONpKs"
+
+  - name: SSH Keys
+    env: SSH_AUTH_SOCK
+    store: env
+    required: true
+    check: "ssh-add -l"
+    notes: "SSH keys in ~/.ssh/ for git operations"
+
+dependencies:
+  - name: git
+    type: package
+    required: true
+    notes: "Version control system"
+
+  - name: gh
+    type: package
+    required: true
+    notes: "GitHub CLI for PR creation"
+
+  - name: gog
+    type: package
+    required: true
+    notes: "Google Sheets CLI tool"
+
+alerts:
+  - condition: "Version mismatch between git tags and registry"
+    severity: warning
+    action: "Update registry to match git reality"
+
+  - condition: "Uncommitted changes during release"
+    severity: critical
+    action: "Block release until repository is clean"
+
+  - condition: "Registry update fails after version bump"
+    severity: critical
+    action: "Retry registry update, block subsequent releases until fixed"

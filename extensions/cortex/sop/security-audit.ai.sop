@@ -1,0 +1,172 @@
+# Security Audit — AI Standard Operating Procedure
+# Spec: https://github.com/heliosarchitect/helios/extensions/cortex/sop/AI_SOP_SPEC.md
+
+meta:
+  name: Security Audit & Hardening
+  version: "1.0.0"
+  repo: ~/Projects/lbf-security
+  hosts: [blackview, giggletits, radio.fleet.wood, octopi]
+  updated: "2026-02-17"
+
+preflight:
+  - id: check-wazuh-status
+    action: Verify Wazuh SIEM is operational
+    command: ssh blackview 'curl -s http://localhost:55000/security/user/authenticate'
+    reason: "SIEM must be running to collect audit data"
+
+  - id: verify-ssh-hardening
+    action: Check SSH is on port 2222 across fleet
+    command: "ssh -p 2222 {host} 'echo SSH_OK'"
+    reason: "Standard hardening: SSH on 2222, not default 22"
+
+  - id: router-security-check
+    action: "CRITICAL: Verify router isn't using default admin/admin"
+    command: "ping 192.168.10.1"
+    reason: "Wavlink router was discovered with default credentials — critical vulnerability"
+
+hosts:
+  - name: blackview
+    ip: 192.168.10.163
+    port: 2222
+    user: bonsaihorn
+    services: [wazuh-manager, wazuh-api, elasticsearch]
+    env: "system"
+    gpu: "NVIDIA GeForce RTX 5090 32GB"
+    gotchas:
+      - "Wazuh SIEM manager and API server"
+      - "Elasticsearch backend for log storage"
+      - "GPU workstation — secure high-value target"
+
+  - name: giggletits
+    ip: 192.168.10.100
+    port: 2222
+    user: bonsaihorn
+    services: [wazuh-agent, docker]
+    env: "system"
+    gpu: "none"
+    gotchas:
+      - "Primary control host, many services exposed"
+      - "Wazuh agent reports to blackview"
+
+  - name: radio.fleet.wood
+    ip: 192.168.10.179
+    port: 2222
+    user: bonsaihorn
+    services: [wazuh-agent, ft991a-control]
+    env: "system"
+    gpu: "none"
+    gotchas:
+      - "Ham radio control — FCC compliance required"
+      - "Physical RF transmission capability"
+
+  - name: octopi
+    ip: 192.168.10.141
+    port: 2222
+    user: bonsaihorn
+    services: [wazuh-agent, octoprint]
+    env: "system"
+    gpu: "none"
+    gotchas:
+      - "3D printer control — physical manufacturing access"
+      - "ARM-based Pi with limited hardening options"
+
+commands:
+  wazuh-status: "ssh blackview 'systemctl status wazuh-manager'"
+  check-agents: "ssh blackview 'wazuh-control info'"
+  scan-ports: "nmap -p 1-65535 {target_ip}"
+  check-ssh-config: "ssh {host} 'grep -E \"^(Port|PermitRootLogin|PasswordAuthentication)\" /etc/ssh/sshd_config'"
+  audit-users: "ssh {host} 'cat /etc/passwd | grep bash'"
+  check-firewall: "ssh {host} 'ufw status verbose'"
+  router-access: "curl -s http://192.168.10.1/login.html"
+
+gotchas:
+  - id: default-router-creds
+    description: "Wavlink router at 192.168.10.1 was using default admin/admin credentials"
+    fix: "IMMEDIATE: Change router admin password, enable WPA3, disable WPS"
+    learned: "2026-02-17"
+
+  - id: ssh-port-22
+    description: "Default SSH port 22 is heavily targeted by automated attacks"
+    fix: "All fleet machines use port 2222. Update /etc/ssh/sshd_config and firewall rules"
+    learned: "2026-02-17"
+
+  - id: wazuh-agent-disconnect
+    description: "Wazuh agents silently disconnect and stop reporting without obvious indication"
+    fix: "Monitor agent connectivity in Wazuh dashboard, alert on >5min silence"
+    learned: "2026-02-17"
+
+  - id: gpu-mining-backdoor
+    description: "High-value GPU systems are targets for crypto-mining malware"
+    fix: "Monitor GPU utilization patterns, alert on unexpected sustained usage"
+    learned: "2026-02-17"
+
+  - id: weak-user-passwords
+    description: "Default passwords on service accounts create backdoor access"
+    fix: "Audit all accounts with shell access, enforce SSH key authentication only"
+    learned: "2026-02-17"
+
+credentials:
+  - name: Wazuh API
+    env: WAZUH_API_TOKEN
+    store: 1password
+    vault: "op://Personal/Wazuh/api_token"
+    required: true
+    check: "curl -s -H 'Authorization: Bearer $WAZUH_API_TOKEN' http://blackview:55000/agents"
+    notes: "Generated in Wazuh web interface"
+
+  - name: Router Admin
+    env: ROUTER_PASSWORD
+    store: 1password
+    vault: "op://Personal/Wavlink Router/password"
+    required: true
+    check: "Changed from default admin/admin"
+    notes: "CRITICAL: Was using default creds. Must be changed immediately."
+
+  - name: SSH Keys
+    env: SSH_AUTH_SOCK
+    store: env
+    required: true
+    check: "ssh-add -l"
+    notes: "SSH keys in ~/.ssh/ for all fleet access. No password auth allowed."
+
+dependencies:
+  - name: wazuh-manager
+    type: service
+    required: true
+    notes: "SIEM manager on blackview (.163)"
+
+  - name: wazuh-agent
+    type: service
+    required: true
+    notes: "Must be installed on all fleet hosts"
+
+  - name: ufw
+    type: package
+    required: true
+    notes: "Firewall on all hosts"
+
+  - name: nmap
+    type: package
+    required: true
+    notes: "Network scanning for audit"
+
+alerts:
+  - condition: "Wazuh agent disconnected > 5 minutes"
+    severity: critical
+    action: "Check agent status, investigate potential compromise"
+
+  - condition: "Failed SSH login attempts > 10 in 5 minutes"
+    severity: warning
+    action: "Review source IPs, consider blocking repeat offenders"
+
+  - condition: "Unexpected GPU usage > 80% when no jobs running"
+    severity: critical
+    action: "Check for crypto-mining malware, audit running processes"
+
+  - condition: "New user account created"
+    severity: warning
+    action: "Verify account is authorized, audit privileges"
+
+  - condition: "Router access from external IP"
+    severity: critical
+    action: "Immediate investigation — potential network compromise"

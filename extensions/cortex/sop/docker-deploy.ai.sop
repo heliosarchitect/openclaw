@@ -1,0 +1,150 @@
+# Docker Deployment — AI Standard Operating Procedure
+# Spec: https://github.com/heliosarchitect/helios/extensions/cortex/sop/AI_SOP_SPEC.md
+
+meta:
+  name: Docker Container Deployment
+  version: "1.0.0"
+  repo: ~/Projects/lbf-infrastructure
+  hosts: [giggletits, blackview, radio.fleet.wood, octopi]
+  updated: "2026-02-17"
+
+preflight:
+  - id: check-host-capacity
+    action: Check available resources on target host
+    command: "ssh {host} 'df -h / && free -m && docker system df'"
+    reason: "Prevent deployments that exhaust disk/memory resources"
+
+  - id: verify-compose
+    action: Validate docker-compose.yml syntax
+    command: "docker-compose config"
+    reason: "Catch configuration errors before deployment"
+
+  - id: check-ports
+    action: Verify required ports are available
+    command: "ssh {host} 'netstat -tulpn | grep :{port}'"
+    reason: "Port conflicts break container startup"
+
+hosts:
+  - name: giggletits
+    ip: 192.168.10.100
+    port: 2222
+    user: bonsaihorn
+    services: [docker, portainer]
+    env: "docker (system)"
+    gpu: "none"
+    gotchas:
+      - "Main deployment target for control services"
+      - "Portainer running on port 9000"
+
+  - name: blackview
+    ip: 192.168.10.163
+    port: 2222
+    user: bonsaihorn
+    services: [docker, wazuh-agent]
+    env: "docker (system)"
+    gpu: "NVIDIA GeForce RTX 5090 32GB"
+    gotchas:
+      - "GPU passthrough requires nvidia-docker2"
+      - "Wazuh SIEM agent running, don't conflict with monitoring"
+
+  - name: radio.fleet.wood
+    ip: 192.168.10.179
+    port: 2222
+    user: bonsaihorn
+    services: [docker]
+    env: "docker (system)"
+    gpu: "none"
+    gotchas:
+      - "Ham radio control services, low resource overhead needed"
+
+  - name: octopi
+    ip: 192.168.10.141
+    port: 2222
+    user: bonsaihorn
+    services: [docker, octoprint]
+    env: "docker (system)"
+    gpu: "none"
+    gotchas:
+      - "OctoPrint on port 5000, avoid conflicts"
+      - "Limited ARM resources, lightweight containers only"
+
+commands:
+  deploy: "cd {project} && docker-compose up -d"
+  stop: "cd {project} && docker-compose down"
+  status: "docker-compose ps"
+  logs: "docker-compose logs -f {service}"
+  update: "cd {project} && docker-compose pull && docker-compose up -d"
+  health: "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
+  cleanup: "docker system prune -f"
+  remote-deploy: "ssh {host} 'cd {project} && docker-compose up -d'"
+
+gotchas:
+  - id: gpu-passthrough
+    description: "GPU containers on blackview need --runtime=nvidia or --gpus all, plus nvidia-docker2 installed"
+    fix: "Use docker-compose version 2.3+ with runtime: nvidia in service definition"
+    learned: "2026-02-17"
+
+  - id: port-conflicts
+    description: "Multiple services trying to bind the same host port causes deployment failures"
+    fix: "Map container ports to different host ports, document in compose file"
+    learned: "2026-02-17"
+
+  - id: volume-permissions
+    description: "Host volume mounts fail if container user doesn't match host file ownership"
+    fix: "Set user: '${UID}:${GID}' in compose or chown host directories appropriately"
+    learned: "2026-02-17"
+
+  - id: health-checks
+    description: "Containers without health checks appear running even when service is broken"
+    fix: "Define healthcheck in Dockerfile or compose file with appropriate test command"
+    learned: "2026-02-17"
+
+  - id: resource-limits
+    description: "Containers without memory/CPU limits can consume entire host resources"
+    fix: "Set deploy.resources.limits in compose file, especially on constrained hosts"
+    learned: "2026-02-17"
+
+credentials:
+  - name: Docker Hub
+    env: DOCKER_HUB_TOKEN
+    store: 1password
+    vault: "op://Personal/Docker Hub/password"
+    required: false
+    check: "docker login --username {user} --password-stdin <<< $DOCKER_HUB_TOKEN"
+    notes: "For private image pulls"
+
+  - name: SSH Keys
+    env: SSH_AUTH_SOCK
+    store: env
+    required: true
+    check: "ssh-add -l"
+    notes: "SSH keys in ~/.ssh/ for remote deployment"
+
+dependencies:
+  - name: docker
+    type: package
+    required: true
+    notes: "Container runtime on all hosts"
+
+  - name: docker-compose
+    type: package
+    required: true
+    notes: "Multi-container orchestration"
+
+  - name: nvidia-docker2
+    type: package
+    required: false
+    notes: "GPU passthrough on blackview only"
+
+alerts:
+  - condition: "Container restart count > 5"
+    severity: warning
+    action: "Check logs for error patterns, investigate resource constraints"
+
+  - condition: "Disk usage > 85%"
+    severity: critical
+    action: "Run docker system prune, identify large containers/volumes"
+
+  - condition: "Memory usage > 90%"
+    severity: critical
+    action: "Scale down or move containers to other hosts"

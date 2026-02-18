@@ -1,0 +1,135 @@
+# New Project Creation — AI Standard Operating Procedure
+# Spec: https://github.com/heliosarchitect/helios/extensions/cortex/sop/AI_SOP_SPEC.md
+
+meta:
+  name: New Project Creation Workflow
+  version: "1.0.0"
+  repo: ~/Projects/lbf-templates
+  hosts: [giggletits]
+  updated: "2026-02-17"
+
+preflight:
+  - id: check-templates
+    action: Verify lbf-templates repository is up to date
+    command: "cd ~/Projects/lbf-templates && git pull origin main"
+    reason: "Ensure latest project template is used for consistency"
+
+  - id: verify-registry-access
+    action: Test Google Sheets registry access
+    command: "gog sheets get 1mWWhO_RP3SIc-Xo17QY4QLCEdKa3iIUN5VpAwxONpKs A1:C1"
+    reason: "Registry update is mandatory, must verify access before project creation"
+
+  - id: check-project-unique
+    action: Verify project name doesn't already exist
+    command: "ls ~/Projects/ | grep -i {project_name}"
+    reason: "Prevent conflicts with existing projects"
+
+hosts:
+  - name: giggletits
+    ip: 192.168.10.100
+    port: 2222
+    user: bonsaihorn
+    services: [git, gog, lbf-enterprise]
+    env: "system"
+    gpu: "none"
+
+commands:
+  create-from-template: "cd ~/Projects && cp -r lbf-templates/project/ {project-name}"
+  init-git: "cd ~/Projects/{project-name} && git init && git add . && git commit -m 'Initial commit from LBF template'"
+  tag-initial: "cd ~/Projects/{project-name} && git tag v0.1.0"
+  add-to-registry: 'gog sheets append 1mWWhO_RP3SIc-Xo17QY4QLCEdKa3iIUN5VpAwxONpKs "Project Registry" "{project_name},{description},v0.1.0,$(date +%Y-%m-%d),LBF"'
+  create-sop: "cd ~/Projects/{project-name} && cp ../lbf-templates/project/{project-name}.ai.sop ."
+  create-lbf-task: 'lbf action=create_task project_id={project_id} title="Setup {project_name}" description="Initialize new project structure" priority=medium stage=spec'
+
+gotchas:
+  - id: missing-registry-update
+    description: "Creating projects without updating the Google Sheets registry breaks tracking and causes duplicates"
+    fix: "Always update registry immediately after project creation, before any other work"
+    learned: "2026-02-17"
+
+  - id: no-initial-sop
+    description: "Projects without .ai.sop files accumulate operational debt and repeated mistakes"
+    fix: "Create project-specific .ai.sop file during initial setup, populate with basic gotchas"
+    learned: "2026-02-17"
+
+  - id: version-tag-skip
+    description: "Projects without v0.1.0 initial tag break semantic versioning workflow"
+    fix: "Always tag v0.1.0 after initial commit, establishes baseline for version tracking"
+    learned: "2026-02-17"
+
+  - id: template-drift
+    description: "Using outdated templates creates inconsistent project structure across LBF portfolio"
+    fix: "Always git pull lbf-templates before creating new projects"
+    learned: "2026-02-17"
+
+  - id: orphan-projects
+    description: "Projects created without LBF task tracking become invisible to project management workflow"
+    fix: "Create corresponding task in LBF enterprise board during project setup"
+    learned: "2026-02-17"
+
+credentials:
+  - name: Google Sheets API
+    env: GOOGLE_APPLICATION_CREDENTIALS
+    store: env
+    required: true
+    check: "gog auth status"
+    notes: "gog auth for Google Sheets API access. Registry: 1mWWhO_RP3SIc-Xo17QY4QLCEdKa3iIUN5VpAwxONpKs"
+
+  - name: GitHub CLI Auth
+    env: GITHUB_TOKEN
+    store: env
+    required: true
+    check: "gh auth status"
+    notes: "For repository creation and management"
+
+  - name: LBF API Token
+    env: LBF_API_TOKEN
+    store: env
+    required: true
+    check: "echo $LBF_API_TOKEN | head -c8"
+    notes: "Enterprise task board for project tracking"
+
+  - name: SSH Keys
+    env: SSH_AUTH_SOCK
+    store: env
+    required: true
+    check: "ssh-add -l"
+    notes: "SSH keys in ~/.ssh/ for git operations"
+
+dependencies:
+  - name: lbf-templates
+    type: service
+    required: true
+    notes: "Project template repository at ~/Projects/lbf-templates/"
+
+  - name: git
+    type: package
+    required: true
+    notes: "Version control system"
+
+  - name: gog
+    type: package
+    required: true
+    notes: "Google Sheets CLI tool"
+
+  - name: gh
+    type: package
+    required: true
+    notes: "GitHub CLI for repository management"
+
+alerts:
+  - condition: "Project created without registry entry"
+    severity: critical
+    action: "Block further project work until registry is updated"
+
+  - condition: "Project missing .ai.sop file after 24 hours"
+    severity: warning
+    action: "Reminder to create project-specific operational procedures"
+
+  - condition: "Project without v0.1.0 tag after initial commit"
+    severity: warning
+    action: "Tag initial version to establish semver baseline"
+
+  - condition: "Template repository not updated > 7 days"
+    severity: info
+    action: "Check for template improvements, pull latest changes"
