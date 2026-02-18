@@ -2060,6 +2060,125 @@ print(json.dumps(result))
 `;
     return (await this.runPython(code)) as Record<string, unknown> | null;
   }
+
+  // =========================================================================
+  // Predictive Intent Methods (v2.1.0)
+  // =========================================================================
+
+  async predictSaveInsight(insight: Record<string, unknown>): Promise<void> {
+    const b64 = Buffer.from(JSON.stringify(insight)).toString("base64");
+    const code = `
+import json, sys, base64
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from predict_manager import PredictManager
+pm = PredictManager()
+data = json.loads(base64.b64decode('${b64}').decode())
+pm.save_insight(data)
+print(json.dumps({"ok": True}))
+`;
+    await this.runPython(code);
+  }
+
+  async predictUpdateInsightState(insightId: string, state: string, extra?: Record<string, unknown>): Promise<void> {
+    const extraB64 = extra ? Buffer.from(JSON.stringify(extra)).toString("base64") : "";
+    const code = `
+import json, sys, base64
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from predict_manager import PredictManager
+pm = PredictManager()
+extra = json.loads(base64.b64decode('${extraB64}').decode()) if '${extraB64}' else None
+pm.update_insight_state('${insightId}', '${state}', extra)
+print(json.dumps({"ok": True}))
+`;
+    await this.runPython(code);
+  }
+
+  async predictGetQueuedInsights(): Promise<Record<string, unknown>[]> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from predict_manager import PredictManager
+pm = PredictManager()
+result = pm.get_queued_insights()
+print(json.dumps(result))
+`;
+    return (await this.runPython(code)) as Record<string, unknown>[];
+  }
+
+  async predictSaveFeedback(feedback: Record<string, unknown>): Promise<void> {
+    const b64 = Buffer.from(JSON.stringify(feedback)).toString("base64");
+    const code = `
+import json, sys, base64
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from predict_manager import PredictManager
+pm = PredictManager()
+data = json.loads(base64.b64decode('${b64}').decode())
+pm.save_feedback(data)
+print(json.dumps({"ok": True}))
+`;
+    await this.runPython(code);
+  }
+
+  async predictGetActionRate(sourceId: string, insightType: string): Promise<Record<string, unknown>> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from predict_manager import PredictManager
+pm = PredictManager()
+result = pm.get_action_rate('${sourceId}', '${insightType}')
+print(json.dumps(result))
+`;
+    return (await this.runPython(code)) as Record<string, unknown>;
+  }
+
+  async predictUpsertActionRate(sourceId: string, insightType: string, rate: number, count: number, halved: boolean): Promise<void> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from predict_manager import PredictManager
+pm = PredictManager()
+pm.upsert_action_rate('${sourceId}', '${insightType}', ${rate}, ${count}, ${halved})
+print(json.dumps({"ok": True}))
+`;
+    await this.runPython(code);
+  }
+
+  async predictGetFeedbackHistory(sourceId: string, insightType: string, actedOn: boolean, windowDays: number): Promise<Record<string, unknown>[]> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from predict_manager import PredictManager
+pm = PredictManager()
+result = pm.get_feedback_history('${sourceId}', '${insightType}', ${actedOn}, ${windowDays})
+print(json.dumps(result))
+`;
+    return (await this.runPython(code)) as Record<string, unknown>[];
+  }
+
+  async predictGetRecentDelivered(limit: number = 10): Promise<Record<string, unknown>[]> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from predict_manager import PredictManager
+pm = PredictManager()
+result = pm.get_recent_delivered(${limit})
+print(json.dumps(result))
+`;
+    return (await this.runPython(code)) as Record<string, unknown>[];
+  }
+
+  async predictExpireStaleInsights(): Promise<number> {
+    const code = `
+import json, sys
+sys.path.insert(0, '${this.pythonScriptsDir}')
+from predict_manager import PredictManager
+pm = PredictManager()
+result = pm.expire_stale_insights()
+print(json.dumps({"expired": result}))
+`;
+    const result = (await this.runPython(code)) as { expired: number };
+    return result.expired;
+  }
 }
 
 /**

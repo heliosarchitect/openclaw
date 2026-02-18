@@ -366,6 +366,68 @@ class UnifiedBrain:
         c.execute("CREATE INDEX IF NOT EXISTS idx_session_prev ON session_states(previous_session_id)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_session_channel ON session_states(channel, start_time)")
 
+        # -- PREDICTIVE INTENT (v2.1.0, migration v5) --
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS insights (
+                id TEXT PRIMARY KEY,
+                type TEXT NOT NULL,
+                source_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                body TEXT NOT NULL,
+                urgency TEXT NOT NULL,
+                urgency_score REAL NOT NULL,
+                confidence REAL NOT NULL DEFAULT 0.8,
+                actionable INTEGER NOT NULL DEFAULT 1,
+                expires_at TEXT,
+                generated_at TEXT NOT NULL,
+                state TEXT NOT NULL DEFAULT 'generated',
+                delivery_channel TEXT,
+                delivered_at TEXT,
+                session_id TEXT NOT NULL,
+                schema_version INTEGER DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_insights_state ON insights(state, urgency_score DESC)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_insights_source ON insights(source_id, type, generated_at DESC)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_insights_expires ON insights(expires_at, state)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_insights_session ON insights(session_id, generated_at DESC)")
+
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS insight_feedback (
+                id TEXT PRIMARY KEY,
+                insight_id TEXT NOT NULL,
+                insight_type TEXT NOT NULL,
+                source_id TEXT NOT NULL,
+                urgency_at_delivery TEXT NOT NULL,
+                delivered_at TEXT NOT NULL,
+                channel TEXT NOT NULL,
+                acted_on INTEGER NOT NULL DEFAULT 0,
+                action_type TEXT NOT NULL DEFAULT 'ignored',
+                latency_ms INTEGER,
+                session_id TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_feedback_source_type ON insight_feedback(source_id, insight_type, acted_on)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_feedback_insight ON insight_feedback(insight_id)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_feedback_session ON insight_feedback(session_id, created_at DESC)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_feedback_window ON insight_feedback(created_at DESC)")
+
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS predict_action_rates (
+                id TEXT PRIMARY KEY,
+                source_id TEXT NOT NULL,
+                insight_type TEXT NOT NULL,
+                action_rate REAL NOT NULL DEFAULT 0.0,
+                observation_count INTEGER DEFAULT 0,
+                rate_halved INTEGER DEFAULT 0,
+                last_updated TEXT NOT NULL,
+                UNIQUE(source_id, insight_type)
+            )
+        """)
+
         conn.commit()
         conn.close()
 

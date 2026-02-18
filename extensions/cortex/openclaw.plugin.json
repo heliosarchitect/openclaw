@@ -95,6 +95,14 @@
         "type": "boolean",
         "default": true,
         "description": "Phase 2: Enable predictive category prefetching"
+      },
+      "predictive_intent": {
+        "type": "object",
+        "description": "Predictive Intent configuration (v2.1.0)",
+        "properties": {
+          "enabled": { "type": "boolean", "default": true },
+          "debug": { "type": "boolean", "default": false }
+        }
       }
     }
   }
