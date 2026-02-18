@@ -156,9 +156,9 @@ pipeline:
         Write to pipeline/{task_id}/bugfix-report.md (or pipeline/bugfix-{date}.md if no active task)
 
   versioning:
-    rule: "Each completed pipeline task = one patch bump"
-    example: "v1.1.0 → v1.1.1 → v1.1.2 → ... → v1.1.20"
-    note: "20 tasks in the improvement plan = version ends at v1.1.20. Minor bump reserved for phase completions."
+    rule: "Each completed pipeline task = one minor bump. Bugfixes = patch bump."
+    example: "v1.1.0 → v1.2.0 → v1.3.0 → ... → v1.21.0"
+    note: "20 tasks = v1.21.0. Major bump reserved for phase completions (v2.0.0 etc). Bugfix-only cycles bump patch (v1.2.1)."
 
   state_file: ~/Projects/helios/extensions/cortex/pipeline/state.json
   artifacts_dir: ~/Projects/helios/extensions/cortex/pipeline/
