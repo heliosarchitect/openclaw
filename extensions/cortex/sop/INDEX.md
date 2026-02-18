@@ -5,22 +5,23 @@
 
 ## SOP Files
 
-| SOP                         | Project            | Path                                       | Purpose                                           |
-| --------------------------- | ------------------ | ------------------------------------------ | ------------------------------------------------- |
-| `comfyui.ai.sop`            | ComfyUI            | `~/Projects/ComfyUI/`                      | Image generation via Flux on blackview (.163)     |
-| `ft991a.ai.sop`             | lbf-ham-radio      | `~/Projects/lbf-ham-radio/`                | FT-991A rig control on radio.fleet.wood (.179)    |
-| `fleet.ai.sop`              | lbf-infrastructure | `~/Projects/lbf-infrastructure/`           | Fleet machine access (SSH, ports, services)       |
-| `augur.ai.sop`              | augur-trading      | `~/Projects/augur-trading/`                | Augur crypto trading bot operations               |
-| `versioning.ai.sop`         | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Semver + Google Sheet registry bump flow          |
-| `documentation.ai.sop`      | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Documentation standards (lbf-templates)           |
-| `sub-agent.ai.sop`          | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Sub-agent spawning, model policy, coordination    |
-| `program-management.ai.sop` | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | LBF task board workflow (programs→projects→tasks) |
-| `software-lifecycle.ai.sop` | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Git workflow, semver, registry updates            |
-| `docker-deploy.ai.sop`      | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Container deployment across fleet hosts           |
-| `3d-printing.ai.sop`        | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | OctoPrint/Prusa MK4 operations on octopi (.141)   |
-| `security-audit.ai.sop`     | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Wazuh SIEM, network hardening, SSH security       |
-| `daily-ops.ai.sop`          | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Fleet monitoring, AUGUR reports, backup checks    |
-| `new-project.ai.sop`        | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Project creation checklist, templates, registry   |
+| SOP                         | Project            | Path                                       | Purpose                                            |
+| --------------------------- | ------------------ | ------------------------------------------ | -------------------------------------------------- |
+| `comfyui.ai.sop`            | ComfyUI            | `~/Projects/ComfyUI/`                      | Image generation via Flux on blackview (.163)      |
+| `ft991a.ai.sop`             | lbf-ham-radio      | `~/Projects/lbf-ham-radio/`                | FT-991A rig control on radio.fleet.wood (.179)     |
+| `fleet.ai.sop`              | lbf-infrastructure | `~/Projects/lbf-infrastructure/`           | Fleet machine access (SSH, ports, services)        |
+| `augur.ai.sop`              | augur-trading      | `~/Projects/augur-trading/`                | Augur crypto trading bot operations                |
+| `versioning.ai.sop`         | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Semver + Google Sheet registry bump flow           |
+| `documentation.ai.sop`      | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Documentation standards (lbf-templates)            |
+| `sub-agent.ai.sop`          | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Sub-agent spawning, model policy, coordination     |
+| `program-management.ai.sop` | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | LBF task board workflow (programs→projects→tasks)  |
+| `software-lifecycle.ai.sop` | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Git workflow, semver, registry updates             |
+| `docker-deploy.ai.sop`      | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Container deployment across fleet hosts            |
+| `3d-printing.ai.sop`        | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | OctoPrint/Prusa MK4 operations on octopi (.141)    |
+| `security-audit.ai.sop`     | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Wazuh SIEM, network hardening, SSH security        |
+| `daily-ops.ai.sop`          | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Fleet monitoring, AUGUR reports, backup checks     |
+| `new-project.ai.sop`        | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Project creation checklist, templates, registry    |
+| `merge.ai.sop`              | cortex/sop         | `~/Projects/helios/extensions/cortex/sop/` | Upstream merge, fork sync, post-merge verification |
 
 ## Cortex Process Memories (importance 3.0)
 

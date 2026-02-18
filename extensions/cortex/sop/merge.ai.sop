@@ -1,0 +1,156 @@
+# Upstream Merge — AI Standard Operating Procedure
+# Spec: https://github.com/heliosarchitect/helios/extensions/cortex/sop/AI_SOP_SPEC.md
+
+meta:
+  name: Upstream Merge & Fork Sync
+  version: "1.0.0"
+  repo: ~/Projects/helios
+  hosts: [giggletits]
+  updated: "2026-02-18"
+
+preflight:
+  - id: document-custom-work
+    action: "Catalog all custom commits ahead of upstream"
+    command: "cd {repo} && git log --oneline origin/main..HEAD"
+    reason: "Know exactly what you're protecting before merging. Every custom commit must survive."
+
+  - id: safety-tag
+    action: "Create a pre-merge tag and backup branch"
+    command: "cd {repo} && git tag pre-merge-$(date +%Y.%m.%d) && git branch backup/pre-merge-$(date +%Y.%m.%d)"
+    reason: "If merge goes wrong, rollback must be instant — not 'figure it out later'."
+
+  - id: clean-working-tree
+    action: "Ensure no uncommitted changes"
+    command: "cd {repo} && git status --porcelain"
+    check: "Output must be empty"
+    reason: "Merging with dirty state makes rollback ambiguous."
+
+  - id: write-recovery-doc
+    action: "Write .ai.docs/RECOVERY.md with rollback commands"
+    reason: "Recovery plan must exist BEFORE the merge, not after it breaks."
+
+  - id: identify-conflict-files
+    action: "Dry-run the merge to see conflicts before committing"
+    command: "cd {repo} && git merge --no-commit --no-ff origin/main; git diff --name-only --diff-filter=U; git merge --abort"
+    reason: "Know the battlefield before fighting."
+
+merge:
+  strategy: "git merge origin/main (never rebase — preserves custom commit history)"
+  conflict-priority: "Fixes first, features second. Resolve one file at a time."
+  custom-preservation: "When in doubt, keep the custom version. Upstream can be re-applied; custom work cannot be re-invented."
+
+post-merge-verification:
+  - id: build-check
+    action: "Build the project — must compile clean"
+    command: "cd {repo} && npm run build 2>&1 | tail -20"
+    check: "Exit code 0, no TypeScript errors"
+    reason: "If it doesn't build, it doesn't ship. This is the #1 gate."
+
+  - id: export-validation
+    action: "Verify all critical module exports still exist"
+    command: |
+      cd {repo} && node -e "
+        const mods = [
+          ['./dist/agents/session-transcript-repair.js', ['sanitizeToolCallInputs', 'stripToolResultDetails', 'repairToolCallInputs']],
+          ['./dist/agents/subagent-registry.js', ['SubagentRegistry']],
+          ['./dist/agents/tools/lbf-tool.js', ['lbfTool']]
+        ];
+        let ok = true;
+        for (const [mod, exports] of mods) {
+          try {
+            const m = require(mod);
+            for (const e of exports) {
+              if (!m[e]) { console.error('MISSING: ' + mod + '.' + e); ok = false; }
+            }
+          } catch(err) { console.error('FAILED: ' + mod + ' — ' + err.message); ok = false; }
+        }
+        process.exit(ok ? 0 : 1);
+      "
+    check: "Exit code 0, no MISSING or FAILED lines"
+    reason: "This is the exact regression that broke Helios on 2026-02-18. A commit overwrote session-transcript-repair.ts and silently dropped 3 exports. Build passed but runtime crashed."
+
+  - id: custom-files-intact
+    action: "Verify critical custom files still exist and have content"
+    command: |
+      cd {repo} && for f in \
+        extensions/cortex/python/brain.py \
+        extensions/cortex/cortex-bridge.ts \
+        src/agents/tools/lbf-tool.ts \
+        extensions/cortex/sop/INDEX.md; do
+        if [ ! -s "$f" ]; then echo "MISSING/EMPTY: $f"; exit 1; fi
+        echo "OK: $f ($(wc -l < $f) lines)"
+      done
+    check: "All files present with expected line counts"
+    reason: "Custom extensions are the most likely merge casualty."
+
+  - id: gateway-smoke-test
+    action: "Start gateway and verify it initializes without crash"
+    command: "cd {repo} && timeout 30 node dist/gateway/index.js 2>&1 | head -50"
+    check: "No 'is not defined' errors, no unhandled rejections, Cortex init completes"
+    reason: "Runtime errors don't show at build time. The sanitizeToolCallInputs crash only appeared when a Signal message triggered transcript repair."
+
+  - id: diff-review
+    action: "Review merge diff for accidentally reverted files"
+    command: "cd {repo} && git diff pre-merge-$(date +%Y.%m.%d)..HEAD --stat"
+    reason: "Large negative line deltas on custom files = reversion. Catch it before push."
+
+  - id: version-bump
+    action: "Tag the post-merge version per versioning.ai.sop"
+    reason: "Merge is a release event. Follow semver SOP."
+
+commands:
+  dry-run: "cd {repo} && git merge --no-commit --no-ff origin/main && git diff --stat && git merge --abort"
+  merge: "cd {repo} && git merge origin/main"
+  rollback: "cd {repo} && git merge --abort || git reset --hard pre-merge-$(date +%Y.%m.%d)"
+  verify-exports: "cd {repo} && npm run build && node -e \"require('./dist/agents/session-transcript-repair.js')\""
+
+gotchas:
+  - id: silent-reversion
+    description: "Merge conflict resolution can silently accept upstream version of a custom file, dropping custom code without any build error"
+    fix: "Always diff each conflicted file against the pre-merge tag after resolution. Check line counts — large drops = reversion."
+    learned: "2026-02-18"
+
+  - id: build-passes-runtime-fails
+    description: "TypeScript build succeeds but runtime crashes because a module's exports were removed. Build only checks types, not export presence."
+    fix: "Post-merge export validation step (node -e require + check named exports). Added as mandatory verification."
+    learned: "2026-02-18"
+
+  - id: multi-agent-merge-coordination
+    description: "Multiple agents working on merge (executor, verifier, QA) need clear ownership of which files each resolves"
+    fix: "Single agent resolves all conflicts. Others verify AFTER, not during."
+    learned: "2026-02-16"
+
+  - id: conflict-count-mismatch
+    description: "Documentation said 62 custom commits but actual was 63 — off-by-one from counting methodology"
+    fix: "Always use git rev-list --count origin/main..HEAD for exact count, not manual logs"
+    learned: "2026-02-16"
+
+credentials: []
+
+dependencies:
+  - name: node
+    type: package
+    required: true
+    notes: "For build and export validation"
+
+  - name: git
+    type: package
+    required: true
+
+  - name: versioning.ai.sop
+    type: sop
+    required: true
+    notes: "Post-merge version bump follows versioning SOP"
+
+alerts:
+  - condition: "Any post-merge-verification step fails"
+    severity: critical
+    action: "STOP. Do not push. Do not restart gateway. Fix or rollback."
+
+  - condition: "Custom file line count drops >20% vs pre-merge tag"
+    severity: critical
+    action: "File was likely reverted to upstream version. Restore from backup branch."
+
+  - condition: "Gateway crashes within 60s of post-merge restart"
+    severity: critical
+    action: "Rollback immediately: git reset --hard pre-merge-{date} && npm run build && restart gateway"
