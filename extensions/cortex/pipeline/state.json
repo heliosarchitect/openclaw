@@ -11,7 +11,7 @@
       "completed_at": "2026-02-18T22:14:00-05:00",
       "version_released": "cortex-v2.1.0",
       "commit": "a1e357f90",
-      "current_stage": "deploy",
+      "current_stage": "done",
       "stages_completed": [
         "requirements",
         "design",
@@ -19,7 +19,8 @@
         "build",
         "security",
         "test",
-        "deploy"
+        "deploy",
+        "done"
       ],
       "artifacts": {
         "requirements": "pipeline/task-005-predictive-intent/requirements.md",
