@@ -355,6 +355,7 @@ async function storeReflection(analysis: ReflectionAnalysis): Promise<void> {
 const selfReflectionPlugin = {
   id: "self-reflection",
   name: "Self-Reflection Coach",
+  label: "Self-Reflection Coach",
   description: "Periodic self-analysis to identify patterns, learn from mistakes, and track growth",
 
   register(api: OpenClawPluginApi) {
@@ -375,6 +376,7 @@ const selfReflectionPlugin = {
     api.registerTool(
       {
         name: "reflect",
+        label: "reflect",
         description:
           "Perform self-reflection analysis on recent memories. Identifies patterns in decisions, mistakes, successes, and generates insights and recommendations for improvement.",
         parameters: Type.Object({

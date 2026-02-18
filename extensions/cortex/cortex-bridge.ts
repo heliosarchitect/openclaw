@@ -84,6 +84,7 @@ export function estimateTokens(text: string): number {
 }
 
 export interface STMItem {
+  id?: string;
   content: string;
   timestamp: string;
   categories: string[]; // Multi-category support (Phase 3)
@@ -1364,6 +1365,7 @@ except Exception as e:
       byCategory: Record<string, number>;
       sizeBytes: number;
       initialized: boolean;
+      hotCount?: number;
     };
     totalRamUsageBytes: number;
   } {

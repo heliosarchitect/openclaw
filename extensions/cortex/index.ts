@@ -1676,6 +1676,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "atom_create",
+        label: "atom_create",
         description:
           "PHASE 3: Create an atomic knowledge unit - the irreducible unit of causal understanding. " +
           "Structure: {subject} {action} {outcome} {consequences}. " +
@@ -1756,6 +1757,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "atom_search",
+        label: "atom_search",
         description:
           "PHASE 3: Search atomic knowledge by a specific field (subject, action, outcome, consequences). " +
           "This enables powerful queries like 'find all entities that cause price movement' or 'what actions lead to FOMO'.",
@@ -1853,6 +1855,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "atom_find_causes",
+        label: "atom_find_causes",
         description:
           "PHASE 3: Traverse backward through causal chains to find root causes. " +
           "This is the 'keep going until the answer is no' capability - finds the novel indicators that others miss.",
@@ -1892,7 +1895,7 @@ const cortexPlugin = {
               };
             }
 
-            let roots;
+            let roots: any[];
             if (p.outcome) {
               // Find all causal paths to this outcome
               roots = await bridge.findPathsToOutcome(p.outcome, p.max_depth ?? 10);
@@ -1954,6 +1957,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "atom_link",
+        label: "atom_link",
         description:
           "PHASE 3: Create or strengthen a causal link between two atoms. " +
           "Types: 'causes' (A directly causes B), 'enables' (A makes B possible), " +
@@ -2037,6 +2041,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "atom_stats",
+        label: "atom_stats",
         description:
           "PHASE 3: Get statistics about the atomic knowledge database - total atoms, causal links, embeddings status.",
         parameters: Type.Object({}),
@@ -2105,6 +2110,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "atomize",
+        label: "atomize",
         description:
           "PHASE 3B: Extract atomic knowledge units from text using local pattern matching. " +
           "Finds causal structures and converts them to atoms. Also supports batch atomization of existing memories.",
@@ -2229,6 +2235,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "abstract_deeper",
+        label: "abstract_deeper",
         description:
           "PHASE 3E: Run deep causal analysis on a query. Automatically traverses atom chains " +
           "to find root causes and novel indicators. The 'keep going until no' capability.",
@@ -2335,6 +2342,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "classify_query",
+        label: "classify_query",
         description:
           "PHASE 3E: Classify a query as 'causal' (needs deep abstraction) or 'recall' (simple retrieval). " +
           "Useful for understanding how Helios will process different questions.",
@@ -2396,6 +2404,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "temporal_search",
+        label: "temporal_search",
         description:
           "PHASE 3F: Search atoms with temporal context. Supports natural language time references " +
           "like '4 hours ago', 'yesterday', 'last week'.",
@@ -2468,6 +2477,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "what_happened_before",
+        label: "what_happened_before",
         description:
           "PHASE 3F: Find what happened before a given event. " +
           "Example: 'What happened 4 hours before the price spike?'",
@@ -2544,6 +2554,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "temporal_patterns",
+        label: "temporal_patterns",
         description:
           "PHASE 3F: Analyze temporal patterns for an outcome. " +
           "Example: 'whale accumulation typically precedes price movement by 4-12 hours'.",
@@ -2647,6 +2658,7 @@ const cortexPlugin = {
     api.registerTool(
       {
         name: "working_memory",
+        label: "working_memory",
         description:
           "Manage working memory (episodic). Items pinned here are ALWAYS included in context and never summarized. Use 'pin' to add, 'view' to list, 'clear' to remove. Max 10 items.",
         parameters: Type.Object({
@@ -2773,6 +2785,7 @@ ${pythonCode}
     api.registerTool(
       {
         name: "synapse",
+        label: "synapse",
         description:
           "SYNAPSE — inter-agent messaging between Helios and Claude Code. " +
           "Structured messages with addressing, read/unread tracking, priority, " +
@@ -2952,7 +2965,7 @@ print(json.dumps({"count": len(result), "messages": result}))
       // Track user message in Active Session cache
       const content =
         typeof event.content === "string" ? event.content : JSON.stringify(event.content);
-      bridge.trackMessage("user", content, event.messageId);
+      bridge.trackMessage("user", content, (event as any).messageId);
     });
 
     api.on(
