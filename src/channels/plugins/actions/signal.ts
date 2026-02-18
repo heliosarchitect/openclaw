@@ -3,6 +3,7 @@ import { createActionGate, jsonResult, readStringParam } from "../../../agents/t
 import { listEnabledSignalAccounts, resolveSignalAccount } from "../../../signal/accounts.js";
 import { resolveSignalReactionLevel } from "../../../signal/reaction-level.js";
 import { sendReactionSignal, removeReactionSignal } from "../../../signal/send-reactions.js";
+import { readMessageActionParams } from "../common-params.js";
 
 const providerId = "signal";
 const GROUP_PREFIX = "group:";
@@ -98,17 +99,14 @@ export const signalMessageActions: ChannelMessageActionAdapter = {
         throw new Error("recipient or group required");
       }
 
-      const messageId = readStringParam(params, "messageId", {
-        required: true,
-        label: "messageId (timestamp)",
-      });
+      // Extract standard message action parameters
+      const { messageId, emoji } = readMessageActionParams(params);
+
       const targetAuthor = readStringParam(params, "targetAuthor");
       const targetAuthorUuid = readStringParam(params, "targetAuthorUuid");
       if (target.groupId && !targetAuthor && !targetAuthorUuid) {
         throw new Error("targetAuthor or targetAuthorUuid required for group reactions.");
       }
-
-      const emoji = readStringParam(params, "emoji", { allowEmpty: true });
       const remove = typeof params.remove === "boolean" ? params.remove : undefined;
 
       const timestamp = parseInt(messageId, 10);

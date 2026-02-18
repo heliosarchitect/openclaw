@@ -1,4 +1,4 @@
-import type { OpenClawPlugin, OpenClawPluginApi } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 /**
  * Cortex - Core Memory Process for OpenClaw
  *
@@ -615,7 +615,7 @@ const cortexPlugin: OpenClawPlugin = {
 
             if (matches.length > 0) {
               // Store matches for after_tool_call to merge
-              const toolCallKey = `${ctx.sessionKey ?? "unknown"}:${event.toolName}:${query}`;
+              const toolCallKey = `${_ctx.sessionKey ?? "unknown"}:${event.toolName}:${query}`;
               pendingStmMatches.set(toolCallKey, matches);
               api.logger.debug?.(
                 `Cortex STM: found ${matches.length} fast-path matches for "${query.slice(0, 30)}..."`,
@@ -796,7 +796,7 @@ const cortexPlugin: OpenClawPlugin = {
 
         try {
           const query = (event.params as { query?: string }).query ?? "";
-          const toolCallKey = `${ctx.sessionKey ?? "unknown"}:${event.toolName}:${query}`;
+          const toolCallKey = `${_ctx.sessionKey ?? "unknown"}:${event.toolName}:${query}`;
 
           // Get any STM matches we found in before_tool_call
           const stmMatches = pendingStmMatches.get(toolCallKey);
@@ -821,6 +821,7 @@ const cortexPlugin: OpenClawPlugin = {
     api.registerTool(
       {
         name: "cortex_create_category",
+        label: "Create Category",
         description:
           "Create a new memory category for organizing knowledge. Use when encountering a new topic domain that doesn't fit existing categories. Categories help with memory retrieval and context injection. Will reject if category or keywords already exist.",
         parameters: Type.Object({
@@ -872,6 +873,7 @@ const cortexPlugin: OpenClawPlugin = {
     api.registerTool(
       {
         name: "cortex_list_categories",
+        label: "List Categories",
         description:
           "List all available memory categories with their descriptions and keywords. Use to understand what categories exist before adding memories or creating new categories.",
         parameters: Type.Object({}),
@@ -914,6 +916,7 @@ const cortexPlugin: OpenClawPlugin = {
     api.registerTool(
       {
         name: "cortex_add",
+        label: "Add Memory",
         description:
           "Store an important memory in Cortex STM. Use for significant insights, decisions, lessons learned, or preferences. Auto-detects categories from content keywords. Use cortex_list_categories to see available categories. Importance: 1.0=routine, 2.0=notable, 3.0=critical. Supports multiple categories.",
         parameters: Type.Object({
@@ -992,6 +995,7 @@ const cortexPlugin: OpenClawPlugin = {
     api.registerTool(
       {
         name: "cortex_stm",
+        label: "View STM",
         description:
           "View recent items from Cortex short-term memory (STM). Shows the last N significant events with O(1) access. Use to quickly recall recent context without full search. Supports filtering by multiple categories.",
         parameters: Type.Object({
@@ -1054,6 +1058,7 @@ const cortexPlugin: OpenClawPlugin = {
     api.registerTool(
       {
         name: "cortex_stats",
+        label: "Memory Stats",
         description:
           "Get Cortex memory statistics: RAM cache status, STM, Active Session, memory index, category breakdown.",
         parameters: Type.Object({}),
@@ -1149,6 +1154,7 @@ const cortexPlugin: OpenClawPlugin = {
     api.registerTool(
       {
         name: "cortex_dedupe",
+        label: "Dedupe Memory",
         description:
           "Find and handle duplicate memories in Cortex. Use 'report' to list duplicates, 'merge' to combine them (keeps newest, sums access counts), or 'delete_older' to remove older duplicates.",
         parameters: Type.Object({
@@ -1322,6 +1328,7 @@ const cortexPlugin: OpenClawPlugin = {
     api.registerTool(
       {
         name: "cortex_update",
+        label: "Update Memory",
         description:
           "Update a memory's importance score or categories. Use to promote important memories or reclassify them.",
         parameters: Type.Object({
@@ -1402,6 +1409,7 @@ const cortexPlugin: OpenClawPlugin = {
     api.registerTool(
       {
         name: "cortex_edit",
+        label: "Edit Memory",
         description:
           "Edit or append to an existing memory. Use 'append' to add to existing content, or 'replace' to overwrite entirely. Content changes trigger re-embedding.",
         parameters: Type.Object({
@@ -1501,6 +1509,7 @@ const cortexPlugin: OpenClawPlugin = {
     api.registerTool(
       {
         name: "cortex_move",
+        label: "Move Memory",
         description:
           "Move a memory to different categories. Replaces existing categories with new ones. No re-embedding needed.",
         parameters: Type.Object({
