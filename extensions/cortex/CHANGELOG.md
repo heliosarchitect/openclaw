@@ -12,6 +12,89 @@ _Every constraint has a scar behind it. Remove only when the underlying system c
 
 ---
 
+## Version 2.0.0 - "Session Persistence" (February 18, 2026)
+
+### ⛔ New Constraints
+
+- **NO direct writes to working_memory.json** — Pin inheritance must use `saveWorkingMemory()` — never direct DB writes to the `working_memory` table.
+- **NO blocking session restoration** — If `onSessionStart()` exceeds 1500ms, fall back to cold start immediately.
+- **NO credential storage in session_states** — All working memory pins must be redacted through `redactCredentials()` before DB write.
+- **NO confidence score modifications from decay engine** — Decay is applied only at restore-time for filtering decisions; it never writes to the `stm` table.
+
+### Breaking Changes
+
+None — All changes are additive and backward compatible. The `session_states` table is created with `CREATE TABLE IF NOT EXISTS` (idempotent migration).
+
+### New Features
+
+- **NEW**: Cross-Session State Preservation — Maintain context across session boundaries with confidence-decayed inheritance
+  - Session state captured at `registerService.stop()` (final) and `agent_end` (incremental, crash-safe)
+  - Prior session context restored at `registerService.start()` via relevance scoring
+  - Confidence decay formula: `max(0.3, 1.0 - (h/168) × 0.4)` — 30% floor after 7 days
+  - Relevance scoring: recency (40%) + topic overlap (35%) + pending tasks (25%)
+  - Sessions with score < 0.25 are silently dropped; top-3 qualifying sessions contribute
+
+- **NEW**: Working Memory Pin Inheritance — Pins from prior sessions survive session boundaries
+  - Up to 5 pins inherited from highest-scoring prior session
+  - Hard cap: 10 total pins enforced (inherited + existing)
+  - Label deduplication prevents duplicate pins on repeated inheritance
+  - CRITICAL-priority pins from prior sessions preserved
+
+- **NEW**: Session Continuity Preamble — Structured context injection on first agent turn
+  - Format: pending tasks, active projects, hot topics, inherited pin count
+  - Injected as L0 context tier (before working memory) — not counted against token budget
+  - Fired once per session (module-level flag prevents repetition)
+  - Cold starts are silent — no preamble if no qualifying prior sessions
+
+- **NEW**: Hot Topic Extraction — Stateful keyword accumulator tracks session focus
+  - Signal sources: tool calls, memory accesses, exec workdirs, Synapse subjects, pin labels
+  - Top-20 keywords stored per session; used for relevance scoring at next session start
+  - Stop word filtering: 30 common stop words excluded
+
+- **NEW**: Crash Recovery — Detect and recover sessions with NULL end_time
+  - `detectAndRecoverCrashed()` fires at every `registerService.start()`
+  - Incremental `agent_end` capture ensures most state survives SIGKILL
+
+- **NEW**: JSON Mirror — Session snapshots mirrored to `~/.openclaw/sessions/{session_id}.json`
+  - Backup outside brain.db for forensic analysis
+  - Written asynchronously (best-effort; DB record is authoritative)
+
+- **NEW**: `cortex_session_continue` tool — Manual session inheritance override
+  - Force-inherit from a specific prior session ID
+  - Useful for multi-channel session continuity
+
+- **NEW**: `session_persistence` config block — 9 configurable parameters
+  - `enabled`, `lookback_days`, `relevance_threshold`, `max_sessions_scored`
+  - `max_inherited_pins`, `decay_min_floor`, `critical_inheritance_days`
+  - `sessions_dir`, `debug`
+
+### Database Changes
+
+- **NEW TABLE**: `session_states` in brain.db (migration v4)
+  - Indexed on `end_time`, `previous_session_id`, `channel`
+  - JSON fields: `working_memory`, `hot_topics`, `active_projects`, `pending_tasks`, `recent_learnings`
+  - Session chain via `previous_session_id` FK links
+
+### New Files
+
+| File                             | Purpose                                                                   |
+| -------------------------------- | ------------------------------------------------------------------------- |
+| `session/types.ts`               | TypeScript interfaces (SessionState, PendingTask, WorkingMemoryPin, etc.) |
+| `session/decay-engine.ts`        | Confidence decay formula                                                  |
+| `session/context-scorer.ts`      | Relevance scoring: recency + topic overlap + pending tasks                |
+| `session/hot-topic-extractor.ts` | Stateful keyword accumulator                                              |
+| `session/preamble-injector.ts`   | Session continuity preamble formatter                                     |
+| `session/session-manager.ts`     | SessionPersistenceManager orchestrator                                    |
+| `python/session_manager.py`      | SQLite DB layer for session_states CRUD                                   |
+
+### Tests Added
+
+- 137 TypeScript tests across 5 new test files (100% requirement coverage)
+- 17 Python integration tests (SQLite CRUD, chain traversal, crash recovery)
+- 0 regressions against existing cortex test suite
+
+---
+
 ## Version 1.2.0 - "Confidence Foundation" (February 17, 2026)
 
 ### ⛔ New Constraints
