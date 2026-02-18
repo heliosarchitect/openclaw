@@ -3,6 +3,35 @@
   "active_tasks": [],
   "completed_tasks": [
     {
+      "task_id": "task-003-pre-action-hooks",
+      "title": "Pre-Action Hook System - Mandatory Knowledge Consultation",
+      "description": "Intercept tool calls and force knowledge consultation (SOP lookup + cortex process category search) before execution. Phase 1.1 of IMPROVEMENT_PLAN.",
+      "phase": "1.1",
+      "started_at": "2026-02-18T14:00:00Z",
+      "completed_at": "2026-02-18T17:59:00Z",
+      "version_released": "cortex-v1.5.0",
+      "commit": "2ec356bc5",
+      "current_stage": "done",
+      "stages_completed": [
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
+      "artifacts": {
+        "requirements": "pipeline/task-003-pre-action-hooks/requirements.md",
+        "design": "pipeline/task-003-pre-action-hooks/design.md",
+        "documentation": "pipeline/task-003-pre-action-hooks/document.md",
+        "build": "pipeline/task-003-pre-action-hooks/build-report.md",
+        "security": "pipeline/task-003-pre-action-hooks/security-review.md",
+        "test": "pipeline/task-003-pre-action-hooks/test-report.md",
+        "deploy": "pipeline/task-003-pre-action-hooks/release-notes.md"
+      }
+    },
+    {
       "task_id": "task-002-metrics-instrumentation",
       "title": "Metrics Instrumentation + QA Report Template",
       "description": "Build a tamper-evident metrics collection system for cortex and synapse",
@@ -59,5 +88,5 @@
       }
     }
   ],
-  "next_task_id": 3
+  "next_task_id": 4
 }
