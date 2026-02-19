@@ -1,6 +1,24 @@
 {
   "pipeline_version": "1.0.0",
-  "active_tasks": [],
+  "active_tasks": [
+    {
+      "task_id": "task-006-self-healing",
+      "title": "Self-Healing Infrastructure",
+      "description": "Auto-detect failures, diagnose root causes, and self-repair without human intervention. Phase 5.2 of IMPROVEMENT_PLAN.",
+      "phase": "5.2",
+      "started_at": "2026-02-18T17:40:28-05:00",
+      "current_stage": "deploy",
+      "stages_completed": ["requirements", "design", "document", "build", "security", "test"],
+      "artifacts": {
+        "requirements": "pipeline/task-006-self-healing/requirements.md",
+        "design": "pipeline/task-006-self-healing/design.md",
+        "documentation": "pipeline/task-006-self-healing/document.md",
+        "build": "pipeline/task-006-self-healing/build-report.md",
+        "security": "pipeline/task-006-self-healing/security.md",
+        "test": "pipeline/task-006-self-healing/test.md"
+      }
+    }
+  ],
   "completed_tasks": [
     {
       "task_id": "task-005-predictive-intent",
@@ -150,13 +168,8 @@
       }
     }
   ],
-  "next_task_id": 6,
+  "next_task_id": 16,
   "queued_tasks": [
-    {
-      "task_id": "task-006-self-healing",
-      "title": "Self-Healing Infrastructure",
-      "phase": "5.2"
-    },
     {
       "task_id": "task-007-adversarial-testing",
       "title": "Adversarial Self-Testing",
@@ -181,6 +194,30 @@
       "task_id": "task-011-realtime-learning",
       "title": "Real-Time Learning from Failure",
       "phase": "5.7"
+    },
+    {
+      "task_id": "task-012-radio-logbook",
+      "title": "FT-991A Digital Logbook + QSO Tracking",
+      "phase": "radio",
+      "description": "ADIF-format logbook integrated into LCARS GUI. Auto-populate from VFO state, callsign lookup via QRZ/HamDB, QSO timer, DXCC/WAS tracking, export for LoTW/eQSL upload."
+    },
+    {
+      "task_id": "task-013-radio-digital-modes",
+      "title": "FT-991A Digital Mode Integration (FT8/JS8Call)",
+      "phase": "radio",
+      "description": "Integrate WSJT-X/JS8Call control via UDP protocol. Display FT8 decode waterfall in LCARS GUI, one-click QSO, auto-log contacts, band-hopping scheduler for POTA/SOTA activations."
+    },
+    {
+      "task_id": "task-014-radio-propagation",
+      "title": "FT-991A Propagation Dashboard + Band Recommender",
+      "phase": "radio",
+      "description": "Real-time propagation data (solar flux, K-index, A-index, MUF) in LCARS GUI. AI band recommendation engine \u2014 best band/mode based on conditions, time of day, target region, historical QSO success rates."
+    },
+    {
+      "task_id": "task-015-radio-contest-mode",
+      "title": "FT-991A Contest Assistant",
+      "phase": "radio",
+      "description": "Contest mode in LCARS GUI. Cabrillo log export, dupe checking, multiplier tracking, rate meter, auto-CW exchange macros, serial number management, N1MM-style score display."
     }
   ]
 }

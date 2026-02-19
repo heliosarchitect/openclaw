@@ -1115,6 +1115,59 @@ export class CortexBridge {
     });
   }
 
+  /** Path to brain.db for direct SQLite access. */
+  get dbPath(): string {
+    return join(this.memoryDir, "brain.db");
+  }
+
+  /**
+   * Run arbitrary SQL on brain.db (INSERT/UPDATE/DELETE/CREATE).
+   */
+  async runSQL(sql: string, params?: unknown[]): Promise<void> {
+    const escapedSql = sql.replace(/'/g, "\\'").replace(/\n/g, " ");
+    const paramsJson = JSON.stringify(params ?? []).replace(/'/g, "\\'");
+    await this.runPython(`
+import sqlite3, json, os
+db = sqlite3.connect(os.path.join(os.environ.get('CORTEX_DATA_DIR', '.'), 'brain.db'))
+db.execute('${escapedSql}', json.loads('${paramsJson}'))
+db.commit()
+db.close()
+print('null')
+`);
+  }
+
+  /**
+   * Get a single row from brain.db as JSON object (or null).
+   */
+  async getSQL<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T | null> {
+    const escapedSql = sql.replace(/'/g, "\\'").replace(/\n/g, " ");
+    const paramsJson = JSON.stringify(params ?? []).replace(/'/g, "\\'");
+    return (await this.runPython(`
+import sqlite3, json, os
+db = sqlite3.connect(os.path.join(os.environ.get('CORTEX_DATA_DIR', '.'), 'brain.db'))
+db.row_factory = sqlite3.Row
+row = db.execute('${escapedSql}', json.loads('${paramsJson}')).fetchone()
+db.close()
+print(json.dumps(dict(row)) if row else 'null')
+`)) as T | null;
+  }
+
+  /**
+   * Get all matching rows from brain.db as JSON array.
+   */
+  async allSQL<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]> {
+    const escapedSql = sql.replace(/'/g, "\\'").replace(/\n/g, " ");
+    const paramsJson = JSON.stringify(params ?? []).replace(/'/g, "\\'");
+    return ((await this.runPython(`
+import sqlite3, json, os
+db = sqlite3.connect(os.path.join(os.environ.get('CORTEX_DATA_DIR', '.'), 'brain.db'))
+db.row_factory = sqlite3.Row
+rows = db.execute('${escapedSql}', json.loads('${paramsJson}')).fetchall()
+db.close()
+print(json.dumps([dict(r) for r in rows]))
+`)) ?? []) as T[];
+  }
+
   /**
    * Add to short-term memory
    * PHASE 1: Now with 50,000 item capacity
@@ -2079,7 +2132,11 @@ print(json.dumps({"ok": True}))
     await this.runPython(code);
   }
 
-  async predictUpdateInsightState(insightId: string, state: string, extra?: Record<string, unknown>): Promise<void> {
+  async predictUpdateInsightState(
+    insightId: string,
+    state: string,
+    extra?: Record<string, unknown>,
+  ): Promise<void> {
     const extraB64 = extra ? Buffer.from(JSON.stringify(extra)).toString("base64") : "";
     const code = `
 import json, sys, base64
@@ -2119,7 +2176,10 @@ print(json.dumps({"ok": True}))
     await this.runPython(code);
   }
 
-  async predictGetActionRate(sourceId: string, insightType: string): Promise<Record<string, unknown>> {
+  async predictGetActionRate(
+    sourceId: string,
+    insightType: string,
+  ): Promise<Record<string, unknown>> {
     const code = `
 import json, sys
 sys.path.insert(0, '${this.pythonScriptsDir}')
@@ -2131,7 +2191,13 @@ print(json.dumps(result))
     return (await this.runPython(code)) as Record<string, unknown>;
   }
 
-  async predictUpsertActionRate(sourceId: string, insightType: string, rate: number, count: number, halved: boolean): Promise<void> {
+  async predictUpsertActionRate(
+    sourceId: string,
+    insightType: string,
+    rate: number,
+    count: number,
+    halved: boolean,
+  ): Promise<void> {
     const code = `
 import json, sys
 sys.path.insert(0, '${this.pythonScriptsDir}')
@@ -2143,7 +2209,12 @@ print(json.dumps({"ok": True}))
     await this.runPython(code);
   }
 
-  async predictGetFeedbackHistory(sourceId: string, insightType: string, actedOn: boolean, windowDays: number): Promise<Record<string, unknown>[]> {
+  async predictGetFeedbackHistory(
+    sourceId: string,
+    insightType: string,
+    actedOn: boolean,
+    windowDays: number,
+  ): Promise<Record<string, unknown>[]> {
     const code = `
 import json, sys
 sys.path.insert(0, '${this.pythonScriptsDir}')

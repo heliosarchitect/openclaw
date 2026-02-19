@@ -26,6 +26,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
+import type { HealingEngineConfig } from "./healing/types.js";
 import type {
   PredictBridgeMethods,
   PredictiveIntentConfig,
@@ -39,6 +40,7 @@ import type {
   WorkingMemoryPin,
 } from "./session/types.js";
 import { CortexBridge, type STMItem, estimateTokens } from "./cortex-bridge.js";
+import { HealingEngine, type HealingEngineDeps } from "./healing/index.js";
 import { ContextExtractor } from "./hooks/context-extractor.js";
 import { EnforcementEngine, EnforcementLevel } from "./hooks/enforcement-engine.js";
 import { KnowledgeDiscovery } from "./hooks/knowledge-discovery.js";
@@ -922,6 +924,108 @@ const cortexPlugin = {
       patternLearner = new PatternLearner(predictBridge, predictConfig);
 
       api.logger.info?.("Cortex Predictive Intent system initialized");
+    }
+
+    // PHASE 5.2: Initialize Self-Healing Engine
+    let healingEngine: HealingEngine | null = null;
+    const healingRawConfig = (rawConfig as Record<string, unknown>)?.self_healing as
+      | Record<string, unknown>
+      | undefined;
+    const healingEnabled = healingRawConfig?.enabled !== false;
+
+    if (healingEnabled) {
+      const healingConfig: HealingEngineConfig = {
+        enabled: true,
+        auto_execute_whitelist: (healingRawConfig?.auto_execute_whitelist as
+          | string[]
+          | undefined) ?? ["rb-rotate-logs", "rb-gc-trigger"],
+        tier3_signal_channel: (healingRawConfig?.tier3_signal_channel as string) ?? "signal",
+        confidence_auto_execute: (healingRawConfig?.confidence_auto_execute as number) ?? 0.8,
+        dry_run_graduation_count: (healingRawConfig?.dry_run_graduation_count as number) ?? 3,
+        verification_interval_ms: (healingRawConfig?.verification_interval_ms as number) ?? 30000,
+        min_clear_readings: (healingRawConfig?.min_clear_readings as number) ?? 3,
+        incident_dismiss_window_ms:
+          (healingRawConfig?.incident_dismiss_window_ms as number) ?? 86400000,
+        probe_intervals_ms: {
+          augur_process: 60000,
+          gateway: 120000,
+          brain_db: 900000,
+          disk: 600000,
+          memory: 300000,
+          log_bloat: 1800000,
+          ...(healingRawConfig?.probe_intervals_ms as Record<string, number> | undefined),
+        },
+        debug: (healingRawConfig?.debug as boolean) ?? false,
+      };
+
+      const healingDeps: HealingEngineDeps = {
+        db: {
+          async run(sql: string, params?: unknown[]) {
+            await bridge.runSQL(sql, params);
+          },
+          async get<T = Record<string, unknown>>(
+            sql: string,
+            params?: unknown[],
+          ): Promise<T | null> {
+            return bridge.getSQL<T>(sql, params);
+          },
+          async all<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]> {
+            return bridge.allSQL<T>(sql, params);
+          },
+        },
+        writeMetric,
+        sendSynapse: async (body: string, priority: "info" | "action" | "urgent") => {
+          try {
+            const escapedBody = body.replace(/'/g, "\\'").replace(/\n/g, "\\n");
+            const escapedPriority = priority.replace(/'/g, "\\'");
+            await bridge["runPython"](`
+import json, sys
+sys.path.insert(0, '${bridge["pythonScriptsDir"]}')
+from brain import UnifiedBrain
+b = UnifiedBrain()
+result = b.synapse_send('helios', 'all', 'Self-Healing', '${escapedBody}', '${escapedPriority}')
+print(json.dumps(result))
+`);
+          } catch {
+            /* best effort */
+          }
+        },
+        sendSignal: async (message: string) => {
+          // Signal sends are handled by the escalation router posting to Synapse with urgent priority;
+          // actual Signal delivery requires the gateway message tool which isn't available in plugin context.
+          // We log the message — the agent's heartbeat picks up urgent synapse messages.
+          try {
+            const escapedMsg = message.replace(/'/g, "\\'").replace(/\n/g, "\\n");
+            await bridge["runPython"](`
+import json, sys
+sys.path.insert(0, '${bridge["pythonScriptsDir"]}')
+from brain import UnifiedBrain
+b = UnifiedBrain()
+result = b.synapse_send('helios', 'all', 'CRITICAL: Self-Healing Alert', '${escapedMsg}', 'urgent')
+print(json.dumps(result))
+`);
+          } catch {
+            /* best effort */
+          }
+        },
+        dbPath: bridge.dbPath,
+        logger: api.logger,
+      };
+
+      try {
+        healingEngine = new HealingEngine(healingConfig, healingDeps);
+
+        // Subscribe to PollingEngine readings if available
+        if (pollingEngine) {
+          pollingEngine.onReading((reading) => {
+            void healingEngine!.onReading(reading);
+          });
+        }
+
+        api.logger.info?.("Cortex Self-Healing engine initialized (starts on session start)");
+      } catch (err) {
+        api.logger.warn?.(`Self-Healing init failed: ${err}`);
+      }
     }
 
     // Track last detected category for predictive prefetch
@@ -4026,6 +4130,16 @@ print(json.dumps({"count": len(result), "messages": result}))
             await pollingEngine.start();
             api.logger.info?.("Cortex Predictive Intent polling started");
 
+            // PHASE 5.2: Start Self-Healing Engine (after polling engine)
+            if (healingEngine) {
+              try {
+                await healingEngine.start();
+                api.logger.info?.("Cortex Self-Healing engine started");
+              } catch (err) {
+                api.logger.warn?.(`Self-Healing start failed: ${err}`);
+              }
+            }
+
             // Check for morning brief
             if (briefingGenerator) {
               const morningBrief = briefingGenerator.checkMorningBrief();
@@ -4039,6 +4153,14 @@ print(json.dumps({"count": len(result), "messages": result}))
         }
       },
       async stop() {
+        // PHASE 5.2: Stop Self-Healing Engine
+        if (healingEngine) {
+          try {
+            await healingEngine.stop();
+          } catch (err) {
+            api.logger.warn?.(`Self-Healing stop failed: ${err}`);
+          }
+        }
         // PHASE 5: Stop Predictive Intent polling
         if (pollingEngine) {
           try {

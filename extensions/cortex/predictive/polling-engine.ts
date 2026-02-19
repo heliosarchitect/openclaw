@@ -10,10 +10,14 @@ import type {
   PredictiveIntentConfig,
   SourceReading,
   UrgencyScoringInputs,
-} from './types.js';
-import { InsightGenerator } from './insight-generator.js';
-import { computeCrossSourceConfirmation, computeTimeSensitivity, scoreInsight } from './urgency-scorer.js';
-import { focusModeTracker } from './focus-mode-tracker.js';
+} from "./types.js";
+import { focusModeTracker } from "./focus-mode-tracker.js";
+import { InsightGenerator } from "./insight-generator.js";
+import {
+  computeCrossSourceConfirmation,
+  computeTimeSensitivity,
+  scoreInsight,
+} from "./urgency-scorer.js";
 
 export class PollingEngine {
   private adapters: Map<string, DataSourceAdapter> = new Map();
@@ -23,6 +27,7 @@ export class PollingEngine {
   private running: boolean = false;
   private insightGenerator: InsightGenerator;
   private lastPollTime: string | null = null;
+  private readingListeners: Array<(reading: SourceReading) => void> = [];
 
   constructor(
     private bridge: PredictBridgeMethods,
@@ -52,7 +57,7 @@ export class PollingEngine {
         this.insightQueue.set(insight.id, insight);
       }
     } catch (err) {
-      console.warn('PollingEngine: failed to recover queued insights:', err);
+      console.warn("PollingEngine: failed to recover queued insights:", err);
     }
 
     // Start per-source timers
@@ -92,14 +97,12 @@ export class PollingEngine {
    */
   getRelevantInsights(keywords: string[]): Insight[] {
     if (keywords.length === 0) return [];
-    const lowerKeywords = keywords.map(k => k.toLowerCase());
+    const lowerKeywords = keywords.map((k) => k.toLowerCase());
     return Array.from(this.insightQueue.values())
-      .filter(i =>
-        i.state === 'scored' || i.state === 'queued' || i.state === 'delivered'
-      )
-      .filter(i => {
+      .filter((i) => i.state === "scored" || i.state === "queued" || i.state === "delivered")
+      .filter((i) => {
         const text = `${i.title} ${i.body} ${i.source_id}`.toLowerCase();
-        return lowerKeywords.some(kw => text.includes(kw));
+        return lowerKeywords.some((kw) => text.includes(kw));
       })
       .sort((a, b) => b.urgency_score - a.urgency_score)
       .slice(0, 3);
@@ -125,30 +128,29 @@ export class PollingEngine {
 
     if (params.query) {
       const q = params.query.toLowerCase();
-      results = results.filter(i =>
-        i.title.toLowerCase().includes(q) ||
-        i.body.toLowerCase().includes(q) ||
-        i.source_id.includes(q),
+      results = results.filter(
+        (i) =>
+          i.title.toLowerCase().includes(q) ||
+          i.body.toLowerCase().includes(q) ||
+          i.source_id.includes(q),
       );
     }
     if (params.sources?.length) {
-      results = results.filter(i => params.sources!.includes(i.source_id));
+      results = results.filter((i) => params.sources!.includes(i.source_id));
     }
     if (params.urgency_min) {
       const minLevel = urgencyOrder[params.urgency_min] ?? 0;
-      results = results.filter(i => (urgencyOrder[i.urgency] ?? 0) >= minLevel);
+      results = results.filter((i) => (urgencyOrder[i.urgency] ?? 0) >= minLevel);
     }
     if (!params.include_queue) {
-      results = results.filter(i => i.state === 'delivered');
+      results = results.filter((i) => i.state === "delivered");
     }
 
-    results = results
-      .sort((a, b) => b.urgency_score - a.urgency_score)
-      .slice(0, params.limit ?? 5);
+    results = results.sort((a, b) => b.urgency_score - a.urgency_score).slice(0, params.limit ?? 5);
 
     const stale = Array.from(this.lastReadings.values())
-      .filter(r => Date.now() - new Date(r.captured_at).getTime() > r.freshness_ms)
-      .map(r => r.source_id);
+      .filter((r) => Date.now() - new Date(r.captured_at).getTime() > r.freshness_ms)
+      .map((r) => r.source_id);
 
     return {
       insights: results,
@@ -162,8 +164,7 @@ export class PollingEngine {
    * Get all queued/delivered insights (for feedback tracking).
    */
   getDeliveredInsights(): Insight[] {
-    return Array.from(this.insightQueue.values())
-      .filter(i => i.state === 'delivered');
+    return Array.from(this.insightQueue.values()).filter((i) => i.state === "delivered");
   }
 
   /**
@@ -203,7 +204,24 @@ export class PollingEngine {
     this.timers.set(adapter.source_id, timer);
   }
 
+  /**
+   * Register a callback that fires on every SourceReading (including unavailable).
+   * Used by HealingEngine to subscribe to polling data without duplicate fetches.
+   */
+  onReading(callback: (reading: SourceReading) => void): void {
+    this.readingListeners.push(callback);
+  }
+
   private async onReadingComplete(reading: SourceReading): Promise<void> {
+    // Notify external listeners (e.g. HealingEngine)
+    for (const listener of this.readingListeners) {
+      try {
+        listener(reading);
+      } catch {
+        /* never propagate to polling loop */
+      }
+    }
+
     this.lastReadings.set(reading.source_id, reading);
     this.lastPollTime = new Date().toISOString();
 
@@ -235,7 +253,7 @@ export class PollingEngine {
         );
 
         // Update queue
-        scored.insight.state = 'queued';
+        scored.insight.state = "queued";
         this.insightQueue.set(scored.insight.id, scored.insight);
 
         // Persist to brain.db
@@ -251,9 +269,9 @@ export class PollingEngine {
 
   private estimateFinancialImpact(insight: Insight): number {
     // Financial sources get higher impact scores
-    if (insight.source_id.startsWith('augur.')) {
-      if (insight.type === 'anomaly' || insight.type === 'alert') return 0.7;
-      if (insight.type === 'opportunity') return 0.9;
+    if (insight.source_id.startsWith("augur.")) {
+      if (insight.type === "anomaly" || insight.type === "alert") return 0.7;
+      if (insight.type === "opportunity") return 0.9;
       return 0.3;
     }
     return 0.0;
@@ -263,10 +281,10 @@ export class PollingEngine {
     const now = Date.now();
     for (const [id, insight] of this.insightQueue) {
       if (insight.expires_at && new Date(insight.expires_at).getTime() < now) {
-        insight.state = 'expired';
+        insight.state = "expired";
         this.insightQueue.delete(id);
         try {
-          await this.bridge.updateInsightState(id, 'expired');
+          await this.bridge.updateInsightState(id, "expired");
         } catch {
           // Best effort
         }
