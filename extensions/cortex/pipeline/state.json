@@ -1,6 +1,7 @@
 {
   "pipeline_version": "1.0.0",
-  "active_tasks": [
+  "active_tasks": [],
+  "completed_tasks": [
     {
       "task_id": "task-006-self-healing",
       "title": "Self-Healing Infrastructure",
@@ -15,7 +16,8 @@
         "build",
         "security",
         "test",
-        "deploy"
+        "deploy",
+        "done"
       ],
       "artifacts": {
         "requirements": "pipeline/task-006-self-healing/requirements.md",
@@ -24,11 +26,13 @@
         "build": "pipeline/task-006-self-healing/build-report.md",
         "security": "pipeline/task-006-self-healing/security.md",
         "test": "pipeline/task-006-self-healing/test.md",
-        "deploy": "pipeline/task-006-self-healing/release-notes.md"
-      }
-    }
-  ],
-  "completed_tasks": [
+        "deploy": "pipeline/task-006-self-healing/deploy.md",
+        "done": "pipeline/task-006-self-healing/release-notes.md"
+      },
+      "completed_at": "2026-02-18T19:25:00-05:00",
+      "version_released": "cortex-v2.2.0",
+      "commit": "f65c4b3e2"
+    },
     {
       "task_id": "task-005-predictive-intent",
       "title": "Predictive Intent \u2014 Act Before Asked",
