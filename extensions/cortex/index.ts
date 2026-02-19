@@ -63,6 +63,7 @@ import { PatternLearner } from "./predictive/pattern-learner.js";
 import { PollingEngine } from "./predictive/polling-engine.js";
 import { HotTopicExtractor } from "./session/hot-topic-extractor.js";
 import { SessionPersistenceManager } from "./session/session-manager.js";
+import { OutcomeCollector, TrustGate, runMigration } from "./trust/index.js";
 
 const execAsync = promisify(exec);
 
@@ -729,6 +730,24 @@ const cortexPlugin = {
       api.logger.info?.("Cortex Pre-Action Hook System enabled");
     }
 
+    // PHASE 5.6: Initialize Earned Autonomy Trust Gate
+    let trustGate: TrustGate | null = null;
+    let outcomeCollector: OutcomeCollector | null = null;
+    void (async () => {
+      try {
+        // Dynamic import of better-sqlite3 (native module — may not be in cortex package.json)
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const SqliteDB = require("better-sqlite3") as typeof import("better-sqlite3");
+        const trustDb = new SqliteDB(bridge.dbPath);
+        runMigration(trustDb);
+        trustGate = new TrustGate(trustDb);
+        outcomeCollector = new OutcomeCollector(trustDb);
+        api.logger.info?.("Cortex Earned Autonomy trust gate initialized (Phase 5.6)");
+      } catch (err) {
+        api.logger.warn?.(`Cortex Trust Gate init failed (fail-open): ${err}`);
+      }
+    })();
+
     // PHASE 5: Initialize Predictive Intent system
     let pollingEngine: PollingEngine | null = null;
     let deliveryRouter: DeliveryRouter | null = null;
@@ -1372,6 +1391,87 @@ print(json.dumps(result))
         { priority: 90 }, // High priority but below STM fast path
       );
     }
+
+    // =========================================================================
+    // Hook: before_tool_call - Earned Autonomy Trust Gate (Phase 5.6)
+    // Runs at priority 85 (after SOP/enforcement at 90). Applies to ALL tools.
+    // PASS → allow. PAUSE → block + ask Matthew. BLOCK → halt + Synapse alert.
+    // =========================================================================
+    api.on(
+      "before_tool_call",
+      async (event, ctx) => {
+        // Skip if trust gate not initialized yet
+        if (!trustGate) return;
+
+        // Skip trust gate for read-only cortex introspection (avoid infinite loops)
+        const SKIP_TOOLS = new Set(["cortex_stm", "cortex_stats", "session_status"]);
+        if (SKIP_TOOLS.has(event.toolName)) return;
+
+        try {
+          const sessionId = ctx.sessionKey ?? "unknown";
+          const decision = trustGate.check(
+            event.toolName,
+            (event.params ?? {}) as Record<string, unknown>,
+            sessionId,
+          );
+
+          if (decision.result === "pass") {
+            // Auto-approved — log and allow
+            api.logger.debug?.(
+              `TrustGate: PASS ${event.toolName} [${decision.category} tier${decision.tier}] score=${(decision.trust_score * 100).toFixed(0)}%`,
+            );
+            return;
+          }
+
+          if (decision.result === "pause") {
+            const msg =
+              `🔐 **Trust Gate: Confirmation Required**\n` +
+              `Tool: \`${event.toolName}\` | Category: \`${decision.category}\` | Tier: ${decision.tier}\n` +
+              `Trust score: ${(decision.trust_score * 100).toFixed(0)}% (threshold: ${(decision.threshold * 100).toFixed(0)}%)\n` +
+              `${decision.reason}\n\n` +
+              `Reply **yes** or **no** to proceed/cancel. Decision ID: \`${decision.decision_id}\``;
+
+            api.logger.info?.(
+              `TrustGate: PAUSE ${event.toolName} [${decision.category}] score=${(decision.trust_score * 100).toFixed(0)}% < threshold=${(decision.threshold * 100).toFixed(0)}%`,
+            );
+
+            return { block: true, blockReason: msg };
+          }
+
+          if (decision.result === "block") {
+            // Post Synapse alert for BLOCK decisions
+            try {
+              await execAsync(
+                `python3 -c "
+import sys
+sys.path.append('${join(homedir(), "Projects/helios/extensions/cortex/python")}')
+exec(open('${join(homedir(), "Projects/helios/extensions/cortex/python/synapse_bridge.py")}').read())
+" 2>/dev/null || true`,
+              );
+            } catch {
+              // Non-fatal: Synapse alert failure doesn't affect gate decision
+            }
+
+            const msg =
+              `🚫 **Trust Gate: BLOCKED**\n` +
+              `Tool: \`${event.toolName}\` | Category: \`${decision.category}\` | Tier: ${decision.tier}\n` +
+              `Trust score: ${(decision.trust_score * 100).toFixed(0)}% — below floor threshold.\n` +
+              `${decision.reason}\n\n` +
+              `Use \`trust-grant grant ${decision.category}\` to override, or raise trust score by demonstrating reliability.`;
+
+            api.logger.warn?.(
+              `TrustGate: BLOCK ${event.toolName} [${decision.category}] score=${(decision.trust_score * 100).toFixed(0)}% — below floor`,
+            );
+
+            return { block: true, blockReason: msg };
+          }
+        } catch (err) {
+          // Fail-open: trust gate errors never block execution
+          api.logger.debug?.(`TrustGate check error (fail-open): ${err}`);
+        }
+      },
+      { priority: 85 }, // Runs after SOP enforcement (90), before post-hooks (50)
+    );
 
     // =========================================================================
     // Hook: after_tool_call - Temporal/importance re-ranking for memory_search

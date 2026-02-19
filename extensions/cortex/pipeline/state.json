@@ -2,29 +2,20 @@
   "pipeline_version": "1.0.0",
   "active_tasks": [
     {
-      "task_id": "task-009-cross-domain-transfer",
-      "title": "Cross-Domain Pattern Transfer",
-      "phase": "5.5",
+      "task_id": "task-010-earned-autonomy",
+      "title": "Earned Autonomy \u2014 Progressive Trust",
+      "phase": "5.6",
       "status": "active",
-      "current_stage": "done",
-      "stages_completed": [
-        "requirements",
-        "design",
-        "document",
-        "build",
-        "security",
-        "test",
-        "deploy"
-      ],
+      "current_stage": "deploy",
+      "stages_completed": ["requirements", "design", "document", "build", "security", "test"],
       "artifacts": {
-        "requirements": "pipeline/task-009-cross-domain-transfer/requirements.md",
-        "design": "pipeline/task-009-cross-domain-transfer/design.md",
-        "document": "pipeline/task-009-cross-domain-transfer/document.md",
-        "documentation": "pipeline/task-009-cross-domain-transfer/document.md",
-        "build": "pipeline/task-009-cross-domain-transfer/build-report.md",
-        "security": "pipeline/task-009-cross-domain-transfer/security.md",
-        "test": "pipeline/task-009-cross-domain-transfer/test.md",
-        "deploy": "pipeline/task-009-cross-domain-transfer/deploy.md"
+        "requirements": "pipeline/task-010-earned-autonomy/requirements.md",
+        "design": "pipeline/task-010-earned-autonomy/design.md",
+        "document": "pipeline/task-010-earned-autonomy/document.md",
+        "test": "pipeline/task-010-earned-autonomy/test.md",
+        "documentation": "pipeline/task-010-earned-autonomy/document.md",
+        "build": "pipeline/task-010-earned-autonomy/build-report.md",
+        "security": "pipeline/task-010-earned-autonomy/security.md"
       }
     }
   ],
@@ -263,15 +254,37 @@
         "security": "pipeline/task-008-knowledge-compression/security.md",
         "deploy": "pipeline/task-008-knowledge-compression/deploy.md"
       }
+    },
+    {
+      "task_id": "task-009-cross-domain-transfer",
+      "title": "Cross-Domain Pattern Transfer",
+      "phase": "5.5",
+      "status": "completed",
+      "current_stage": "done",
+      "stages_completed": [
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy",
+        "done"
+      ],
+      "artifacts": {
+        "requirements": "pipeline/task-009-cross-domain-transfer/requirements.md",
+        "design": "pipeline/task-009-cross-domain-transfer/design.md",
+        "document": "pipeline/task-009-cross-domain-transfer/document.md",
+        "documentation": "pipeline/task-009-cross-domain-transfer/document.md",
+        "build": "pipeline/task-009-cross-domain-transfer/build-report.md",
+        "security": "pipeline/task-009-cross-domain-transfer/security.md",
+        "test": "pipeline/task-009-cross-domain-transfer/test.md",
+        "deploy": "pipeline/task-009-cross-domain-transfer/deploy.md"
+      }
     }
   ],
   "next_task_id": 16,
   "queued_tasks": [
-    {
-      "task_id": "task-010-earned-autonomy",
-      "title": "Earned Autonomy \u2014 Progressive Trust",
-      "phase": "5.6"
-    },
     {
       "task_id": "task-011-realtime-learning",
       "title": "Real-Time Learning from Failure",
