@@ -139,10 +139,17 @@ export class TrustGate {
         .replace(/\b(Bearer\s+)\S+/gi, "$1***REDACTED***")
         // Key/token/password/secret as CLI args (key=value or key:value)
         .replace(/\b(token|key|password|secret|api[_-]?key|auth)[=:]\S+/gi, "$1=***REDACTED***")
+        // AWS credentials (AKIA... access key IDs and secret keys)
+        .replace(/\b(AKIA[0-9A-Z]{16})\b/g, "***AWS_KEY***")
+        .replace(/\b(aws[_-]?secret[_-]?access[_-]?key)[=:]\S+/gi, "$1=***REDACTED***")
+        // URLs with embedded credentials (https://user:pass@host)
+        .replace(/:\/\/[^:]+:[^@]+@/g, "://***CREDS***@")
         // JWT tokens (eyJ... base64 payload)
         .replace(/eyJ[A-Za-z0-9._-]{20,}/g, "***JWT***")
         // Private keys / long hex secrets (40+ hex chars)
         .replace(/\b[0-9a-fA-F]{40,}\b/g, "***HEX_SECRET***")
+        // Base64-encoded secrets (op:// 1Password refs, long base64 blobs)
+        .replace(/\bop:\/\/\S+/g, "***1PASS_REF***")
     );
   }
 
