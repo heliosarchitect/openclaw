@@ -1,0 +1,5 @@
+node_modules/
+dist/
+*.js.map
+adversarial/reports/
+adversarial/adversarial-results.json
