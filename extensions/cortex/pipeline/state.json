@@ -1,6 +1,19 @@
 {
   "pipeline_version": "1.0.0",
-  "active_tasks": [],
+  "active_tasks": [
+    {
+      "task_id": "task-009-cross-domain-transfer",
+      "title": "Cross-Domain Pattern Transfer",
+      "phase": "5.5",
+      "status": "active",
+      "current_stage": "document",
+      "stages_completed": ["requirements", "design"],
+      "artifacts": {
+        "requirements": "pipeline/task-009-cross-domain-transfer/requirements.md",
+        "design": "pipeline/task-009-cross-domain-transfer/design.md"
+      }
+    }
+  ],
   "completed_tasks": [
     {
       "task_id": "task-007-adversarial-testing",
@@ -209,20 +222,37 @@
         "test": "pipeline/task-001-confidence-scoring/test-report.md",
         "deploy": "pipeline/task-001-confidence-scoring/release-notes.md"
       }
+    },
+    {
+      "task_id": "task-008-knowledge-compression",
+      "title": "Knowledge Compression \u2014 Abstraction Engine",
+      "phase": "5.4",
+      "status": "completed",
+      "current_stage": "done",
+      "stages_completed": [
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy",
+        "done"
+      ],
+      "artifacts": {
+        "requirements": "pipeline/task-008-knowledge-compression/requirements.md",
+        "design": "pipeline/task-008-knowledge-compression/design.md",
+        "document": "pipeline/task-008-knowledge-compression/document.md",
+        "test": "pipeline/task-008-knowledge-compression/test.md",
+        "documentation": "pipeline/task-008-knowledge-compression/document.md",
+        "build": "pipeline/task-008-knowledge-compression/build-report.md",
+        "security": "pipeline/task-008-knowledge-compression/security.md",
+        "deploy": "pipeline/task-008-knowledge-compression/deploy.md"
+      }
     }
   ],
   "next_task_id": 16,
   "queued_tasks": [
-    {
-      "task_id": "task-008-knowledge-compression",
-      "title": "Knowledge Compression \u2014 Abstraction Engine",
-      "phase": "5.4"
-    },
-    {
-      "task_id": "task-009-cross-domain-transfer",
-      "title": "Cross-Domain Pattern Transfer",
-      "phase": "5.5"
-    },
     {
       "task_id": "task-010-earned-autonomy",
       "title": "Earned Autonomy \u2014 Progressive Trust",
@@ -232,6 +262,13 @@
       "task_id": "task-011-realtime-learning",
       "title": "Real-Time Learning from Failure",
       "phase": "5.7"
+    },
+    {
+      "task_id": "task-016-test-coverage",
+      "title": "Comprehensive Test Coverage \u2014 Cortex Foundation Tests",
+      "phase": "5.4",
+      "description": "Backfill unit and integration tests for untested Cortex infrastructure: STM/memory operations, atoms/embeddings, Synapse messaging, pipeline orchestrator, SOP parsing/enforcement, cron jobs, and ~/bin scripts. Target: 90%+ coverage on all Cortex modules.",
+      "status": "queued"
     },
     {
       "task_id": "task-012-radio-logbook",
