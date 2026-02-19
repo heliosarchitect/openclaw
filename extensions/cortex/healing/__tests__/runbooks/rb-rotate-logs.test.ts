@@ -5,8 +5,8 @@ import { RbRotateLogs } from "../../runbooks/rb-rotate-logs.js";
 describe("RbRotateLogs", () => {
   const def = new RbRotateLogs();
 
-  it("is auto-whitelisted", () => {
-    expect(def.auto_approve_whitelist).toBe(true);
+  it("requires approval (not auto-whitelisted — FINDING-002)", () => {
+    expect(def.auto_approve_whitelist).toBe(false);
   });
 
   it("applies to disk_pressure and log_bloat", () => {

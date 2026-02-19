@@ -1,6 +1,6 @@
 /**
  * rb-rotate-logs: Archive/compress logs > 7 days
- * AUTO-WHITELISTED — starts in auto_execute mode
+ * Requires approval — log rotation can destroy forensic evidence (FINDING-002)
  */
 
 import { exec } from "node:child_process";
@@ -20,7 +20,7 @@ export class RbRotateLogs implements RunbookDefinition {
   readonly id = "rb-rotate-logs";
   readonly label = "Rotate and compress old log files";
   readonly applies_to: AnomalyType[] = ["disk_pressure", "log_bloat"];
-  readonly auto_approve_whitelist = true;
+  readonly auto_approve_whitelist = false;
 
   build(_anomaly: HealthAnomaly): RunbookStep[] {
     return [

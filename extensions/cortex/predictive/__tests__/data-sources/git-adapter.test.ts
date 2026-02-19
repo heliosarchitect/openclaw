@@ -15,10 +15,5 @@ describe("GitAdapter", () => {
     expect((reading.data as any).repos).toBe(5);
   });
 
-  it("poll without mock returns real data (graceful)", async () => {
-    const adapter = new GitAdapter();
-    const reading = await adapter.poll();
-    expect(reading.source_id).toBe("git.activity");
-    expect(reading).toHaveProperty("data");
-  });
+  // Live git execution moved to git-adapter.live.test.ts (FINDING-003)
 });
