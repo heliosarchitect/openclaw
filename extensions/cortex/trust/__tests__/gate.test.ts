@@ -98,4 +98,161 @@ describe("TrustGate", () => {
       .get(decision.decision_id);
     expect(pending).toBeUndefined();
   });
+
+  // --- sanitizeCommand coverage (FINDING-004) ---
+  // Tests verify secrets are scrubbed in decision_log tool_params_summary
+
+  function getSummary(db: Database.Database, decisionId: string): string {
+    const row = db
+      .prepare(`SELECT tool_params_summary FROM decision_log WHERE decision_id = ?`)
+      .get(decisionId) as { tool_params_summary: string };
+    return row.tool_params_summary;
+  }
+
+  describe("sanitizeCommand (via decision_log)", () => {
+    it("redacts Bearer tokens", () => {
+      const d = gate.check(
+        "exec",
+        { command: "curl -H 'Authorization: Bearer sk-abc123xyz'" },
+        "s",
+      );
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("sk-abc123xyz");
+      expect(s).toContain("***REDACTED***");
+    });
+
+    it("redacts curl -H Authorization headers", () => {
+      const d = gate.check("exec", { command: 'curl -H "Authorization: Token mytoken123"' }, "s");
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("mytoken123");
+    });
+
+    it("redacts key=value and token=value patterns", () => {
+      const d = gate.check("exec", { command: "tool --config api_key=sk_live_abcdef" }, "s");
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("sk_live_abcdef");
+    });
+
+    it("redacts --password and --token CLI flags", () => {
+      const d = gate.check("exec", { command: "mysql --password supersecret --host db" }, "s");
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("supersecret");
+    });
+
+    it("redacts AWS access key IDs (AKIA...)", () => {
+      const d = gate.check(
+        "exec",
+        { command: "aws configure set aws_access_key_id AKIAIOSFODNN7EXAMPLE" },
+        "s",
+      );
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("AKIAIOSFODNN7EXAMPLE");
+      expect(s).toContain("***AWS_KEY***");
+    });
+
+    it("redacts aws_secret_access_key", () => {
+      const d = gate.check(
+        "exec",
+        { command: "export aws_secret_access_key=wJalrXUtnFEMI/K7MDENG" },
+        "s",
+      );
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("wJalrXUtnFEMI");
+    });
+
+    it("redacts GitHub tokens (ghp_)", () => {
+      const d = gate.check(
+        "exec",
+        { command: "gh auth login --with-token ghp_ABCDEFghijklmnop12345678" },
+        "s",
+      );
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("ghp_ABCDEFghijklmnop12345678");
+      expect(s).toContain("***GH_TOKEN***");
+    });
+
+    it("redacts GitLab tokens (glpat-)", () => {
+      const d = gate.check(
+        "exec",
+        { command: "git clone https://glpat-abcdefghijklmnopqrstuv@gitlab.com/repo" },
+        "s",
+      );
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("glpat-abcdefghijklmnopqrstuv");
+      expect(s).toContain("***GL_TOKEN***");
+    });
+
+    it("redacts Slack tokens (xoxb-)", () => {
+      const d = gate.check(
+        "exec",
+        { command: "curl -H 'Authorization: Bearer xoxb-123-456-abcdefghij'" },
+        "s",
+      );
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("xoxb-123-456-abcdefghij");
+    });
+
+    it("redacts URLs with embedded credentials", () => {
+      const d = gate.check(
+        "exec",
+        { command: "psql postgres://admin:p4ssw0rd@db.host:5432/mydb" },
+        "s",
+      );
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("p4ssw0rd");
+      expect(s).toContain("***CREDS***@");
+    });
+
+    it("redacts environment variable exports with secret names", () => {
+      const d = gate.check("exec", { command: "export MY_API_KEY=abcdef123456" }, "s");
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("abcdef123456");
+    });
+
+    it("redacts JWT tokens", () => {
+      const d = gate.check(
+        "exec",
+        {
+          command:
+            "curl -H 'Auth: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N'",
+        },
+        "s",
+      );
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9");
+      expect(s).toContain("***JWT***");
+    });
+
+    it("redacts long hex secrets", () => {
+      const d = gate.check(
+        "exec",
+        { command: "echo aabbccddee00112233445566778899aabbccddee00" },
+        "s",
+      );
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("aabbccddee00112233445566778899aabbccddee00");
+      expect(s).toContain("***HEX_SECRET***");
+    });
+
+    it("redacts 1Password references", () => {
+      const d = gate.check("exec", { command: "op read op://vault/item/field" }, "s");
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("op://vault/item/field");
+      expect(s).toContain("***1PASS_REF***");
+    });
+
+    it("redacts PEM private keys", () => {
+      const d = gate.check(
+        "exec",
+        {
+          command:
+            "echo '-----BEGIN PRIVATE KEY-----\nMIIE...base64...\n-----END PRIVATE KEY-----'",
+        },
+        "s",
+      );
+      const s = getSummary(db, d.decision_id);
+      expect(s).not.toContain("MIIE");
+      expect(s).toContain("***PEM_PRIVATE_KEY***");
+    });
+  });
 });
