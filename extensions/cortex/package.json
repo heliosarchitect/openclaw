@@ -1,6 +1,6 @@
 {
   "name": "@openclaw/cortex",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "description": "Cortex core memory system - adds STM, importance scoring, and auto-capture to existing memory_search",
   "keywords": [
     "cortex",

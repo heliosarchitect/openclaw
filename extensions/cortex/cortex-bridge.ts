@@ -1124,12 +1124,14 @@ export class CortexBridge {
    * Run arbitrary SQL on brain.db (INSERT/UPDATE/DELETE/CREATE).
    */
   async runSQL(sql: string, params?: unknown[]): Promise<void> {
-    const escapedSql = sql.replace(/'/g, "\\'").replace(/\n/g, " ");
-    const paramsJson = JSON.stringify(params ?? []).replace(/'/g, "\\'");
+    const sqlB64 = Buffer.from(sql).toString("base64");
+    const paramsB64 = Buffer.from(JSON.stringify(params ?? [])).toString("base64");
     await this.runPython(`
-import sqlite3, json, os
+import sqlite3, json, os, base64
+sql = base64.b64decode('${sqlB64}').decode()
+params = json.loads(base64.b64decode('${paramsB64}').decode())
 db = sqlite3.connect(os.path.join(os.environ.get('CORTEX_DATA_DIR', '.'), 'brain.db'))
-db.execute('${escapedSql}', json.loads('${paramsJson}'))
+db.execute(sql, params)
 db.commit()
 db.close()
 print('null')
@@ -1140,13 +1142,15 @@ print('null')
    * Get a single row from brain.db as JSON object (or null).
    */
   async getSQL<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T | null> {
-    const escapedSql = sql.replace(/'/g, "\\'").replace(/\n/g, " ");
-    const paramsJson = JSON.stringify(params ?? []).replace(/'/g, "\\'");
+    const sqlB64 = Buffer.from(sql).toString("base64");
+    const paramsB64 = Buffer.from(JSON.stringify(params ?? [])).toString("base64");
     return (await this.runPython(`
-import sqlite3, json, os
+import sqlite3, json, os, base64
+sql = base64.b64decode('${sqlB64}').decode()
+params = json.loads(base64.b64decode('${paramsB64}').decode())
 db = sqlite3.connect(os.path.join(os.environ.get('CORTEX_DATA_DIR', '.'), 'brain.db'))
 db.row_factory = sqlite3.Row
-row = db.execute('${escapedSql}', json.loads('${paramsJson}')).fetchone()
+row = db.execute(sql, params).fetchone()
 db.close()
 print(json.dumps(dict(row)) if row else 'null')
 `)) as T | null;
@@ -1156,13 +1160,15 @@ print(json.dumps(dict(row)) if row else 'null')
    * Get all matching rows from brain.db as JSON array.
    */
   async allSQL<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]> {
-    const escapedSql = sql.replace(/'/g, "\\'").replace(/\n/g, " ");
-    const paramsJson = JSON.stringify(params ?? []).replace(/'/g, "\\'");
+    const sqlB64 = Buffer.from(sql).toString("base64");
+    const paramsB64 = Buffer.from(JSON.stringify(params ?? [])).toString("base64");
     return ((await this.runPython(`
-import sqlite3, json, os
+import sqlite3, json, os, base64
+sql = base64.b64decode('${sqlB64}').decode()
+params = json.loads(base64.b64decode('${paramsB64}').decode())
 db = sqlite3.connect(os.path.join(os.environ.get('CORTEX_DATA_DIR', '.'), 'brain.db'))
 db.row_factory = sqlite3.Row
-rows = db.execute('${escapedSql}', json.loads('${paramsJson}')).fetchall()
+rows = db.execute(sql, params).fetchall()
 db.close()
 print(json.dumps([dict(r) for r in rows]))
 `)) ?? []) as T[];
