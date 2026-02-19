@@ -13,6 +13,11 @@
   "license": "MIT",
   "author": "heliosarchitect",
   "type": "module",
+  "scripts": {
+    "test:adversarial": "tsx adversarial/runner.ts",
+    "test:adversarial:ci": "tsx adversarial/runner.ts --no-cortex --json-only",
+    "test:adversarial:critical": "tsx adversarial/runner.ts --no-cortex --critical-only"
+  },
   "dependencies": {
     "@sinclair/typebox": "0.34.48"
   },

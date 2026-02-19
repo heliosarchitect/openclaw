@@ -1,6 +1,21 @@
 {
   "pipeline_version": "1.0.0",
-  "active_tasks": [],
+  "active_tasks": [
+    {
+      "task_id": "task-007-adversarial-testing",
+      "title": "Adversarial Self-Testing",
+      "phase": "5.3",
+      "status": "in_progress",
+      "current_stage": "security",
+      "stages_completed": ["requirements", "design", "document", "build"],
+      "artifacts": {
+        "requirements": "pipeline/task-007-adversarial-testing/requirements.md",
+        "design": "pipeline/task-007-adversarial-testing/design.md",
+        "documentation": "pipeline/task-007-adversarial-testing/document.md",
+        "build": "pipeline/task-007-adversarial-testing/build-report.md"
+      }
+    }
+  ],
   "completed_tasks": [
     {
       "task_id": "task-006-self-healing",
@@ -184,11 +199,6 @@
   "next_task_id": 16,
   "queued_tasks": [
     {
-      "task_id": "task-007-adversarial-testing",
-      "title": "Adversarial Self-Testing",
-      "phase": "5.3"
-    },
-    {
       "task_id": "task-008-knowledge-compression",
       "title": "Knowledge Compression \u2014 Abstraction Engine",
       "phase": "5.4"
@@ -232,5 +242,7 @@
       "phase": "radio",
       "description": "Contest mode in LCARS GUI. Cabrillo log export, dupe checking, multiplier tracking, rate meter, auto-CW exchange macros, serial number management, N1MM-style score display."
     }
-  ]
+  ],
+  "status": "running",
+  "current_task": "task-007-adversarial-testing"
 }
