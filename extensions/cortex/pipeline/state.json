@@ -1,22 +1,37 @@
 {
   "pipeline_version": "1.0.0",
-  "active_tasks": [
+  "active_tasks": [],
+  "completed_tasks": [
     {
       "task_id": "task-007-adversarial-testing",
       "title": "Adversarial Self-Testing",
       "phase": "5.3",
-      "status": "in_progress",
-      "current_stage": "security",
-      "stages_completed": ["requirements", "design", "document", "build"],
+      "status": "completed",
+      "current_stage": "done",
+      "stages_completed": [
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy",
+        "done"
+      ],
       "artifacts": {
         "requirements": "pipeline/task-007-adversarial-testing/requirements.md",
         "design": "pipeline/task-007-adversarial-testing/design.md",
         "documentation": "pipeline/task-007-adversarial-testing/document.md",
-        "build": "pipeline/task-007-adversarial-testing/build-report.md"
-      }
-    }
-  ],
-  "completed_tasks": [
+        "test": "pipeline/task-007-adversarial-testing/test.md",
+        "build": "pipeline/task-007-adversarial-testing/build-report.md",
+        "security": "pipeline/task-007-adversarial-testing/security.md",
+        "deploy": "pipeline/task-007-adversarial-testing/deploy.md",
+        "done": "pipeline/task-007-adversarial-testing/release-notes.md"
+      },
+      "completed_at": "2026-02-18T21:54:00-05:00",
+      "version_released": "cortex-v2.3.0",
+      "commit": "25a1341ef"
+    },
     {
       "task_id": "task-006-self-healing",
       "title": "Self-Healing Infrastructure",
@@ -244,5 +259,5 @@
     }
   ],
   "status": "running",
-  "current_task": "task-007-adversarial-testing"
+  "current_task": null
 }
