@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "name": "Real-Time Learning Configuration",
+    "description": "Configuration for failure detection, classification, and propagation pipeline",
+    "author": "Deploy Specialist (Pipeline)",
+    "created": "2026-02-19",
+    "task_id": "task-011-realtime-learning"
+  },
+  "correction_keywords": [
+    "wrong path",
+    "that's wrong",
+    "bad command",
+    "use X instead",
+    "outdated SOP",
+    "stale SOP",
+    "that hook is wrong",
+    "wrong binary",
+    "incorrect",
+    "no that's not right",
+    "should be",
+    "use this instead",
+    "stop doing that",
+    "that's broken",
+    "that's not right",
+    "you shouldn't",
+    "don't do that",
+    "wrong file",
+    "wrong command"
+  ],
+  "correction_scan_window_ms": 300000,
+  "correction_proximity_threshold": 0.3,
+  "recurrence_window_days": 30,
+  "preview_ttl_minutes": 10,
+  "tier3_default_on_timeout": "skip",
+  "sop_auto_commit_types": ["additive"],
+  "weekly_metrics_day": "monday",
+  "weekly_metrics_hour": 9,
+  "brain_db_path": "~/Projects/helios/extensions/cortex/python/brain.db",
+  "sop_dir": "~/Projects/helios/extensions/cortex/sop",
+  "regression_test_dir": "~/Projects/helios/extensions/cortex/realtime-learning/__tests__/regression",
+  "failure_log_bin": "~/bin/failure-log",
+  "metrics": {
+    "t2p_target_seconds": 300,
+    "completeness_target_pct": 90,
+    "false_positive_target_pct": 5,
+    "recurrence_alert_threshold": 2
+  }
+}
