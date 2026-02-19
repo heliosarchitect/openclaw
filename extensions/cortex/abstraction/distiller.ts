@@ -51,7 +51,7 @@ export async function distillCluster(
     categories: string;
     importance: number;
   }>(
-    `SELECT id, content, categories, importance FROM memories WHERE id IN (${placeholders})`,
+    `SELECT id, content, categories, importance FROM stm WHERE id IN (${placeholders})`,
     cluster.member_ids,
   );
 

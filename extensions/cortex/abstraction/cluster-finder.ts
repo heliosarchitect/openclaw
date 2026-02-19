@@ -83,7 +83,7 @@ export async function findClusters(
     access_count: number;
   }>(
     `SELECT id, content, categories, importance, timestamp, access_count
-     FROM memories
+     FROM stm
      WHERE importance < ?
        AND timestamp < ?
        AND archived_by IS NULL

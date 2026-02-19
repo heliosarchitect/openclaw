@@ -16,20 +16,20 @@ export async function writeCompressedMemory(
   // Get max importance from source memories
   const placeholders = cluster.member_ids.map(() => "?").join(",");
   const maxRow = await bridge.getSQL<{ max_imp: number }>(
-    `SELECT MAX(importance) as max_imp FROM memories WHERE id IN (${placeholders})`,
+    `SELECT MAX(importance) as max_imp FROM stm WHERE id IN (${placeholders})`,
     cluster.member_ids,
   );
   const importance = maxRow?.max_imp ?? 1.5;
 
   // Get date range of sources
   const rangeRow = await bridge.getSQL<{ min_ts: string; max_ts: string }>(
-    `SELECT MIN(timestamp) as min_ts, MAX(timestamp) as max_ts FROM memories WHERE id IN (${placeholders})`,
+    `SELECT MIN(timestamp) as min_ts, MAX(timestamp) as max_ts FROM stm WHERE id IN (${placeholders})`,
     cluster.member_ids,
   );
 
   // Top-2 categories by frequency + always include 'compressed'
   const catRows = await bridge.allSQL<{ categories: string }>(
-    `SELECT categories FROM memories WHERE id IN (${placeholders})`,
+    `SELECT categories FROM stm WHERE id IN (${placeholders})`,
     cluster.member_ids,
   );
   const catCounts = new Map<string, number>();
@@ -60,7 +60,7 @@ export async function writeCompressedMemory(
   });
 
   await bridge.runSQL(
-    `INSERT INTO memories (id, content, categories, importance, timestamp, access_count, compressed_from, source)
+    `INSERT INTO stm (id, content, categories, importance, timestamp, access_count, compressed_from, source)
      VALUES (?, ?, ?, ?, ?, 0, ?, 'abstraction-engine')`,
     [id, distillation.abstraction, categories, importance, now, compressedFrom],
   );

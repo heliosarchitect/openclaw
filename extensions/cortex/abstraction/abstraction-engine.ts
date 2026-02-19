@@ -56,7 +56,7 @@ export async function runAbstractionEngine(
 
   // Measure baseline tokens
   const baselineRows = await bridge.allSQL<{ content: string }>(
-    `SELECT content FROM memories WHERE importance > 0.5 AND archived_by IS NULL`,
+    `SELECT content FROM stm WHERE importance > 0.5 AND archived_by IS NULL`,
   );
   const tokensBefore = baselineRows.reduce((sum, r) => sum + estimateTokens(r.content), 0);
 
@@ -105,10 +105,10 @@ export async function runAbstractionEngine(
 
         // Archive source memories (inline instead of calling archiver to stay in transaction)
         for (const mid of cluster.member_ids) {
-          await bridge.runSQL(
-            `UPDATE memories SET importance = 0.5, archived_by = ? WHERE id = ?`,
-            [cluster.cluster_id, mid],
-          );
+          await bridge.runSQL(`UPDATE stm SET importance = 0.5, archived_by = ? WHERE id = ?`, [
+            cluster.cluster_id,
+            mid,
+          ]);
         }
         memoriesArchived += cluster.member_ids.length;
 
@@ -174,7 +174,7 @@ export async function runAbstractionEngine(
 
   // Measure post-compression tokens
   const postRows = await bridge.allSQL<{ content: string }>(
-    `SELECT content FROM memories WHERE importance > 0.5 AND archived_by IS NULL`,
+    `SELECT content FROM stm WHERE importance > 0.5 AND archived_by IS NULL`,
   );
   const tokensAfter = postRows.reduce((sum, r) => sum + estimateTokens(r.content), 0);
 

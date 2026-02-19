@@ -48,7 +48,7 @@ describe("writeCompressedMemory", () => {
           { categories: '["signals","augur"]' },
         ]),
       runSQL: vi.fn().mockImplementation(async (sql: string, params: any[]) => {
-        if (sql.includes("INSERT INTO memories")) {
+        if (sql.includes("INSERT INTO stm")) {
           insertedCategories = params[2]; // categories param
         }
       }),
@@ -78,7 +78,7 @@ describe("writeCompressedMemory", () => {
         .mockResolvedValueOnce({ min_ts: "2026-01-01T00:00:00Z", max_ts: "2026-01-10T00:00:00Z" }),
       allSQL: vi.fn().mockResolvedValue([{ categories: '["general"]' }]),
       runSQL: vi.fn().mockImplementation(async (sql: string, params: any[]) => {
-        if (sql.includes("INSERT INTO memories")) {
+        if (sql.includes("INSERT INTO stm")) {
           insertedImportance = params[3]; // importance param
         }
       }),
@@ -97,7 +97,7 @@ describe("writeCompressedMemory", () => {
         .mockResolvedValueOnce({ min_ts: "2026-01-01T00:00:00Z", max_ts: "2026-01-01T00:00:00Z" }),
       allSQL: vi.fn().mockResolvedValue([{ categories: '["general"]' }]),
       runSQL: vi.fn().mockImplementation(async (sql: string, params: any[]) => {
-        if (sql.includes("INSERT INTO memories")) {
+        if (sql.includes("INSERT INTO stm")) {
           insertedCompressedFrom = params[5]; // compressed_from param
         }
       }),

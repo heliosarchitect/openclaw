@@ -33,13 +33,13 @@ export async function runMigration008(bridge: CortexBridge): Promise<void> {
 
   // Add columns to memories table (SQLite ALTER TABLE ADD COLUMN is safe if column exists — it errors, so we catch)
   try {
-    await bridge.runSQL(`ALTER TABLE memories ADD COLUMN compressed_from TEXT`);
+    await bridge.runSQL(`ALTER TABLE stm ADD COLUMN compressed_from TEXT`);
   } catch {
     // Column already exists
   }
 
   try {
-    await bridge.runSQL(`ALTER TABLE memories ADD COLUMN archived_by TEXT`);
+    await bridge.runSQL(`ALTER TABLE stm ADD COLUMN archived_by TEXT`);
   } catch {
     // Column already exists
   }

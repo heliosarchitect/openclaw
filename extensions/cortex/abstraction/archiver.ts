@@ -16,7 +16,7 @@ export async function archiveSourceMemories(
 
   try {
     for (const mid of memberIds) {
-      await bridge.runSQL(`UPDATE memories SET importance = 0.5, archived_by = ? WHERE id = ?`, [
+      await bridge.runSQL(`UPDATE stm SET importance = 0.5, archived_by = ? WHERE id = ?`, [
         clusterId,
         mid,
       ]);
@@ -26,17 +26,16 @@ export async function archiveSourceMemories(
     // Rollback: restore archived memories to their previous state
     for (const mid of archived) {
       try {
-        await bridge.runSQL(
-          `UPDATE memories SET importance = 1.0, archived_by = NULL WHERE id = ?`,
-          [mid],
-        );
+        await bridge.runSQL(`UPDATE stm SET importance = 1.0, archived_by = NULL WHERE id = ?`, [
+          mid,
+        ]);
       } catch {
         // Best effort rollback
       }
     }
     // Delete the compressed memory
     try {
-      await bridge.runSQL(`DELETE FROM memories WHERE id = ?`, [compressedMemoryId]);
+      await bridge.runSQL(`DELETE FROM stm WHERE id = ?`, [compressedMemoryId]);
     } catch {
       // Best effort
     }
