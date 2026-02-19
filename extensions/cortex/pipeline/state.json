@@ -373,17 +373,9 @@
       "title": "FT-991A Contest Assistant",
       "phase": "radio",
       "description": "Contest mode in LCARS GUI. Cabrillo log export, dupe checking, multiplier tracking, rate meter, auto-CW exchange macros, serial number management, N1MM-style score display."
-    },
-    {
-      "task_id": "task-017-bridge-sql-hardening",
-      "title": "Bridge SQL Hardening \u2014 Base64 Parameter Passing",
-      "phase": "security",
-      "description": "Replace naive SQL string interpolation in cortex-bridge.ts (runSQL/getSQL/allSQL) with base64-encoded parameter passing to eliminate FINDING-001 SQL injection vector. Source: task-016 security review."
     }
   ],
   "status": "running",
-  "current_task": null,
-  "active_task": null,
-  "current_stage": null,
+  "current_stage": "test",
   "stages_completed": []
 }

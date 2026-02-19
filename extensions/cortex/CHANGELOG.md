@@ -12,6 +12,55 @@ _Every constraint has a scar behind it. Remove only when the underlying system c
 
 ---
 
+## Version 2.7.5 - "SQL Hardening Validated" (February 19, 2026)
+
+### Security
+
+- **task-017 complete:** Full validation pipeline for FINDING-001 SQL injection fix. All 20 hardening tests pass. CHANGELOG backfilled for v2.7.1–v2.7.4.
+
+### Fixes (v2.7.1–v2.7.5 cumulative — backfilled from git log)
+
+- **v2.7.5:** `fix(cortex)` — Demote `rb-rotate-logs` auto-approval + isolate git-adapter live test (commit `7472d1693`)
+- **v2.7.4:** `fix(cortex)` — Expand `sanitizeCommand` with GitHub/GitLab/Slack/PEM/env-export patterns + 16 tests (commit `818dd1cfa`)
+- **v2.7.3:** `fix(cortex)` — Add AWS/URL/1Password credential patterns to `sanitizeCommand` (commit `1d78021f0`)
+- **v2.7.2:** `fix(cortex)` — **FINDING-001 (High) mitigated:** Replaced naive single-quote escaping in `runSQL`, `getSQL`, and `allSQL` with base64-encoded parameter passing. SQL strings and params are now base64-encoded in TypeScript before embedding in the Python subprocess template. Python decodes both values before execution via `base64.b64decode`. Eliminates backslash-quote bypass (`\'` → `\\'`) that could break out of the Python string literal. All values reach `db.execute(sql, params)` safely decoded. (commit `3f25091b4`)
+- **v2.7.1:** `fix(cortex)` — Correct `memories→stm` table name in abstraction engine (6 files + test) (commit `3ba083c90`)
+
+### Test Coverage Added (task-017)
+
+- **NEW:** `extensions/cortex/__tests__/sql-hardening.test.ts` — 20 injection resistance tests covering AC-001 through AC-015
+  - Real Python subprocess execution against hermetic temp SQLite database
+  - Script integrity tests validate base64 encoding present in generated Python scripts
+  - Static source analysis guards against reintroduction of `.replace(/'/)` escape patterns
+  - Adversarial: multi-statement DROP TABLE, 4KB SQL stress, Unicode params
+
+### Security Findings Logged
+
+| ID          | Severity | Status                | Description                                                         |
+| ----------- | -------- | --------------------- | ------------------------------------------------------------------- |
+| FINDING-001 | High     | ✅ Mitigated (v2.7.2) | SQL injection via backslash-quote bypass — base64 encoding fix      |
+| FINDING-002 | Medium   | 🔵 Track (task-018)   | Non-SQL `runPython` callers use `JSON.stringify` interpolation      |
+| OBS-001     | Low      | 🔵 Track (task-018)   | `memoryId` interpolated without encoding in `editSTM`/`updateSTM`   |
+| OBS-002     | Low      | 🔵 Track              | Concurrent SQLite access may cause transient lock errors under load |
+
+### Behavioral Signature
+
+```
+✓ extensions/cortex/__tests__/sql-hardening.test.ts (20 tests) — all pass
+# grep "\.replace.*'" cortex-bridge.ts → 0 results in SQL methods
+# TypeScript: exit 0, no errors
+```
+
+**Regression indicator:**
+
+```
+✗ backslash-quote bypass does not break Python execution (FINDING-001)
+Error: Python subprocess exited with code 1
+SyntaxError: EOL while scanning string literal
+```
+
+---
+
 ## Version 2.0.0 - "Session Persistence" (February 18, 2026)
 
 ### ⛔ New Constraints
