@@ -1,12 +1,13 @@
 {
   "pipeline_version": "1.0.0",
-  "active_tasks": [
+  "active_tasks": [],
+  "completed_tasks": [
     {
       "task_id": "task-016-test-coverage",
       "title": "Comprehensive Test Coverage \u2014 Cortex Foundation Tests",
       "phase": "5.4",
       "description": "Backfill unit and integration tests for untested Cortex infrastructure: STM/memory operations, atoms/embeddings, Synapse messaging, pipeline orchestrator, SOP parsing/enforcement, cron jobs, and ~/bin scripts. Target: 90%+ coverage on all Cortex modules.",
-      "status": "active",
+      "status": "completed",
       "current_stage": "done",
       "stages_completed": [
         "requirements",
@@ -15,7 +16,8 @@
         "build",
         "security",
         "test",
-        "deploy"
+        "deploy",
+        "done"
       ],
       "artifacts": {
         "requirements": "pipeline/task-016-test-coverage/requirements.md",
@@ -26,10 +28,11 @@
         "security": "pipeline/task-016-test-coverage/security.md",
         "test": "pipeline/task-016-test-coverage/test.md",
         "deploy": "pipeline/task-016-test-coverage/deploy.md"
-      }
-    }
-  ],
-  "completed_tasks": [
+      },
+      "completed_at": "2026-02-19T04:06:00-05:00",
+      "version_released": "cortex-v2.7.0",
+      "commit": "343ac8567"
+    },
     {
       "task_id": "task-007-adversarial-testing",
       "title": "Adversarial Self-Testing",
@@ -373,14 +376,14 @@
     },
     {
       "task_id": "task-017-bridge-sql-hardening",
-      "title": "Bridge SQL Hardening — Base64 Parameter Passing",
+      "title": "Bridge SQL Hardening \u2014 Base64 Parameter Passing",
       "phase": "security",
       "description": "Replace naive SQL string interpolation in cortex-bridge.ts (runSQL/getSQL/allSQL) with base64-encoded parameter passing to eliminate FINDING-001 SQL injection vector. Source: task-016 security review."
     }
   ],
   "status": "running",
   "current_task": null,
-  "active_task": "task-016-test-coverage",
-  "current_stage": "design",
+  "active_task": null,
+  "current_stage": null,
   "stages_completed": []
 }
