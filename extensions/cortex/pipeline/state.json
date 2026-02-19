@@ -6,11 +6,16 @@
       "title": "Cross-Domain Pattern Transfer",
       "phase": "5.5",
       "status": "active",
-      "current_stage": "document",
-      "stages_completed": ["requirements", "design"],
+      "current_stage": "deploy",
+      "stages_completed": ["requirements", "design", "document", "build", "security", "test"],
       "artifacts": {
         "requirements": "pipeline/task-009-cross-domain-transfer/requirements.md",
-        "design": "pipeline/task-009-cross-domain-transfer/design.md"
+        "design": "pipeline/task-009-cross-domain-transfer/design.md",
+        "document": "pipeline/task-009-cross-domain-transfer/document.md",
+        "documentation": "pipeline/task-009-cross-domain-transfer/document.md",
+        "build": "pipeline/task-009-cross-domain-transfer/build-report.md",
+        "security": "pipeline/task-009-cross-domain-transfer/security.md",
+        "test": "pipeline/task-009-cross-domain-transfer/test.md"
       }
     }
   ],
