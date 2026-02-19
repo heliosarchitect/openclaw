@@ -1,6 +1,6 @@
 {
   "name": "@openclaw/cortex",
-  "version": "2.5.0",
+  "version": "2.7.0",
   "description": "Cortex core memory system - adds STM, importance scoring, and auto-capture to existing memory_search",
   "keywords": [
     "cortex",
@@ -14,9 +14,12 @@
   "author": "heliosarchitect",
   "type": "module",
   "scripts": {
+    "test": "vitest run extensions/cortex/",
     "test:adversarial": "tsx adversarial/runner.ts",
     "test:adversarial:ci": "tsx adversarial/runner.ts --no-cortex --json-only",
-    "test:adversarial:critical": "tsx adversarial/runner.ts --no-cortex --critical-only"
+    "test:adversarial:critical": "tsx adversarial/runner.ts --no-cortex --critical-only",
+    "test:coverage": "vitest run --coverage extensions/cortex/",
+    "test:fast": "vitest run extensions/cortex/"
   },
   "dependencies": {
     "@sinclair/typebox": "0.34.48"
