@@ -29,7 +29,19 @@ RETENTION_DAYS = 14         # auto-prune messages older than this
 ACK_RETENTION_DAYS = 3      # acked messages pruned after 3 days
 THREAD_COMPACT_AFTER = 10   # compact threads with >10 messages
 VALID_PRIORITIES = ("info", "action", "urgent")
-VALID_AGENTS = ("helios", "claude-code")  # known agents for scoping
+
+# Agent scoping: typed identifiers so same roles track across sessions.
+# Format: "{type}:{instance}" — e.g. "pipeline:build", "benchmark:gaia"
+# Queries can filter by prefix to get all agents of a type.
+KNOWN_AGENT_TYPES = {
+    "main":      "Primary Helios session",
+    "claude-code": "Claude Code (Nova) coding agent",
+    "pipeline":  "Pipeline stage specialists (pipeline:requirements, pipeline:build, etc.)",
+    "benchmark": "Benchmark runners (benchmark:gaia, benchmark:swe, etc.)",
+    "monitor":   "Monitoring agents (monitor:augur, monitor:event-watch, etc.)",
+    "research":  "Research sub-agents",
+    "system":    "System/maintenance messages",
+}
 
 
 def _generate_id(prefix: str) -> str:
@@ -147,30 +159,41 @@ def send_message(
         conn.close()
 
 
-def get_inbox(agent_id: str, include_read: bool = False, limit: int = 50) -> list:
-    """Get messages for an agent. Unread by default; optionally include read."""
+def get_inbox(agent_id: str, include_read: bool = False, limit: int = 50,
+              from_type: str | None = None) -> list:
+    """Get messages for an agent. Unread by default; optionally include read.
+    
+    from_type: filter by agent type prefix (e.g. "pipeline" matches "pipeline:build").
+    """
     conn = _get_conn()
     _ensure_schema(conn)
     try:
+        base_where = "(m.to_agent = ? OR m.to_agent = 'all')"
+        params: list = [agent_id]
+
+        if from_type:
+            base_where += " AND (m.from_agent = ? OR m.from_agent LIKE ?)"
+            params.extend([from_type, f"{from_type}:%"])
+
         if include_read:
-            # All messages addressed to this agent (or 'all') that aren't acked
-            rows = conn.execute("""
+            params.append(agent_id)
+            rows = conn.execute(f"""
                 SELECT m.* FROM messages m
-                WHERE (m.to_agent = ? OR m.to_agent = 'all')
+                WHERE {base_where}
                 AND m.id NOT IN (SELECT message_id FROM acks WHERE agent_id = ?)
                 ORDER BY m.created_at DESC
                 LIMIT ?
-            """, (agent_id, agent_id, limit)).fetchall()
+            """, (*params, limit)).fetchall()
         else:
-            # Only unread (no read receipt from this agent)
-            rows = conn.execute("""
+            params.extend([agent_id, agent_id])
+            rows = conn.execute(f"""
                 SELECT m.* FROM messages m
-                WHERE (m.to_agent = ? OR m.to_agent = 'all')
+                WHERE {base_where}
                 AND m.id NOT IN (SELECT message_id FROM read_receipts WHERE agent_id = ?)
                 AND m.id NOT IN (SELECT message_id FROM acks WHERE agent_id = ?)
                 ORDER BY m.created_at DESC
                 LIMIT ?
-            """, (agent_id, agent_id, agent_id, limit)).fetchall()
+            """, (*params, limit)).fetchall()
 
         return [dict(r) for r in rows]
     finally:
@@ -225,14 +248,20 @@ def acknowledge_message(message_id: str, acker_agent: str, ack_body: str | None 
 def get_history(
     agent_id: str | None = None,
     thread_id: str | None = None,
+    from_type: str | None = None,
     limit: int = 20,
 ) -> list:
-    """Get message history with optional filters."""
+    """Get message history with optional filters.
+    
+    agent_id: filter to messages involving this agent
+    thread_id: filter to specific thread
+    from_type: filter by agent type prefix (e.g. "pipeline", "benchmark")
+    """
     conn = _get_conn()
     _ensure_schema(conn)
     try:
         query = "SELECT * FROM messages WHERE 1=1"
-        params = []
+        params: list = []
 
         if agent_id:
             query += " AND (from_agent = ? OR to_agent = ? OR to_agent = 'all')"
@@ -241,6 +270,10 @@ def get_history(
         if thread_id:
             query += " AND thread_id = ?"
             params.append(thread_id)
+
+        if from_type:
+            query += " AND (from_agent = ? OR from_agent LIKE ?)"
+            params.extend([from_type, f"{from_type}:%"])
 
         query += " ORDER BY created_at DESC LIMIT ?"
         params.append(limit)
