@@ -7,7 +7,7 @@
       "phase": "2.2",
       "description": "Implement memory consolidation pipeline to merge redundant memories, promote validated patterns, archive low-utility noise, and flag contradictions with configurable rules and scheduled execution.",
       "status": "active",
-      "current_stage": "deploy",
+      "current_stage": "done",
       "stages_completed": [
         "bugfix",
         "requirements",
