@@ -1,0 +1,21 @@
+{
+  "run_id": "2026-02-21T11:12:02.285411",
+  "mode": "dry_run",
+  "config_hash": "sha256:a2197ea0c395de8b3d3694d47b6df9b133800a00f1b7008d147f6fd358486d50",
+  "scope": {
+    "limit": null
+  },
+  "detected": {
+    "clusters": 0,
+    "contradiction_pairs": 0
+  },
+  "planned": {
+    "merge": 0,
+    "promote": 0,
+    "archive": 0,
+    "flag_contradiction": 0,
+    "noop": 0
+  },
+  "actions": [],
+  "executed": {}
+}

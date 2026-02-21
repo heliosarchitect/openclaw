@@ -1,0 +1,19 @@
+{
+  "task_id": "task-018-memory-consolidation",
+  "title": "Memory Consolidation System",
+  "phase": "2.2",
+  "description": "Implement memory consolidation pipeline to merge redundant memories, promote validated patterns, archive low-utility noise, and flag contradictions with configurable rules and scheduled execution.",
+  "status": "active",
+  "current_stage": "test",
+  "stages_completed": ["bugfix", "design", "document", "requirements", "build", "security", "test"],
+  "stages_blocked": [],
+  "started_at": "2026-02-21T11:00:00-05:00",
+  "artifacts": {
+    "requirements": "requirements.md",
+    "design": "design.md",
+    "document": "document.md",
+    "build": "build-report.md",
+    "security": "security.md",
+    "test": "test.md"
+  }
+}

@@ -1,6 +1,38 @@
 {
   "pipeline_version": "1.0.0",
-  "active_tasks": [],
+  "active_tasks": [
+    {
+      "task_id": "task-018-memory-consolidation",
+      "title": "Memory Consolidation System",
+      "phase": "2.2",
+      "description": "Implement memory consolidation pipeline to merge redundant memories, promote validated patterns, archive low-utility noise, and flag contradictions with configurable rules and scheduled execution.",
+      "status": "active",
+      "current_stage": "deploy",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T11:00:00-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md",
+        "requirements": "pipeline/task-018-memory-consolidation/requirements.md",
+        "design": "pipeline/task-018-memory-consolidation/design.md",
+        "document": "pipeline/task-018-memory-consolidation/document.md",
+        "documentation": "pipeline/task-018-memory-consolidation/document.md",
+        "build": "pipeline/task-018-memory-consolidation/build-report.md",
+        "security": "pipeline/task-018-memory-consolidation/security.md",
+        "test": "pipeline/task-018-memory-consolidation/test.md",
+        "deploy": "pipeline/task-018-memory-consolidation/deploy.md"
+      }
+    }
+  ],
   "completed_tasks": [
     {
       "task_id": "task-016-test-coverage",
@@ -348,7 +380,7 @@
       }
     }
   ],
-  "next_task_id": 18,
+  "next_task_id": 19,
   "queued_tasks": [
     {
       "task_id": "task-012-radio-logbook",
@@ -376,6 +408,7 @@
     }
   ],
   "status": "running",
-  "current_stage": "test",
-  "stages_completed": []
+  "current_stage": "requirements",
+  "stages_completed": ["bugfix"],
+  "killed_tasks": []
 }
