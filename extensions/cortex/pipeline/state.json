@@ -2,10 +2,24 @@
   "pipeline_version": "1.0.0",
   "active_tasks": [
     {
-      "task_id": "task-018-memory-consolidation",
-      "title": "Memory Consolidation System",
-      "phase": "2.2",
-      "description": "Implement memory consolidation pipeline to merge redundant memories, promote validated patterns, archive low-utility noise, and flag contradictions with configurable rules and scheduled execution.",
+      "task_id": "task-019-shared-cortex-architecture",
+      "title": "Shared Cortex Architecture for Sub-Agents",
+      "phase": "3.1",
+      "description": "Implement parent-child Cortex knowledge inheritance and contribution APIs so sub-agents can read high-confidence context and contribute validated learnings back.",
+      "status": "active",
+      "current_stage": "requirements",
+      "stages_completed": ["bugfix"],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:01:21-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/task-019-shared-cortex-architecture/bugfix.md"
+      }
+    },
+    {
+      "task_id": "task-020-shared-cortex-expansion-020",
+      "title": "Shared Cortex Expansion 020",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "active",
       "current_stage": "done",
       "stages_completed": [
@@ -19,17 +33,299 @@
         "deploy"
       ],
       "stages_blocked": [],
-      "started_at": "2026-02-21T11:00:00-05:00",
+      "started_at": "2026-02-21T15:22:55.015804-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md",
-        "requirements": "pipeline/task-018-memory-consolidation/requirements.md",
-        "design": "pipeline/task-018-memory-consolidation/design.md",
-        "document": "pipeline/task-018-memory-consolidation/document.md",
-        "documentation": "pipeline/task-018-memory-consolidation/document.md",
-        "build": "pipeline/task-018-memory-consolidation/build-report.md",
-        "security": "pipeline/task-018-memory-consolidation/security.md",
-        "test": "pipeline/task-018-memory-consolidation/test.md",
-        "deploy": "pipeline/task-018-memory-consolidation/deploy.md"
+        "bugfix": "pipeline/task-020-shared-cortex-expansion-020/bugfix.md",
+        "requirements": "pipeline/task-020-shared-cortex-expansion-020/requirements.md",
+        "design": "pipeline/task-020-shared-cortex-expansion-020/design.md",
+        "documentation": "pipeline/task-020-shared-cortex-expansion-020/document.md",
+        "build": "pipeline/task-020-shared-cortex-expansion-020/build-report.md",
+        "security": "pipeline/task-020-shared-cortex-expansion-020/security.md",
+        "test": "pipeline/task-020-shared-cortex-expansion-020/test.md",
+        "deploy": "pipeline/task-020-shared-cortex-expansion-020/deploy.md"
+      }
+    },
+    {
+      "task_id": "task-021-shared-cortex-expansion-021",
+      "title": "Shared Cortex Expansion 021",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "active",
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.015922-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/task-021-shared-cortex-expansion-021/bugfix.md",
+        "requirements": "pipeline/task-021-shared-cortex-expansion-021/requirements.md",
+        "design": "pipeline/task-021-shared-cortex-expansion-021/design.md",
+        "document": "pipeline/task-021-shared-cortex-expansion-021/document.md",
+        "documentation": "pipeline/task-021-shared-cortex-expansion-021/document.md",
+        "build": "pipeline/task-021-shared-cortex-expansion-021/build.md",
+        "security": "pipeline/task-021-shared-cortex-expansion-021/security.md",
+        "test": "pipeline/task-021-shared-cortex-expansion-021/test.md",
+        "deploy": "pipeline/task-021-shared-cortex-expansion-021/deploy.md"
+      }
+    },
+    {
+      "task_id": "task-022-shared-cortex-expansion-022",
+      "title": "Shared Cortex Expansion 022",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016006-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-023-shared-cortex-expansion-023",
+      "title": "Shared Cortex Expansion 023",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016083-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-024-shared-cortex-expansion-024",
+      "title": "Shared Cortex Expansion 024",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016160-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-025-shared-cortex-expansion-025",
+      "title": "Shared Cortex Expansion 025",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016234-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-026-shared-cortex-expansion-026",
+      "title": "Shared Cortex Expansion 026",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016314-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-027-shared-cortex-expansion-027",
+      "title": "Shared Cortex Expansion 027",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016386-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-028-shared-cortex-expansion-028",
+      "title": "Shared Cortex Expansion 028",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016465-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-029-shared-cortex-expansion-029",
+      "title": "Shared Cortex Expansion 029",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016536-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-030-shared-cortex-expansion-030",
+      "title": "Shared Cortex Expansion 030",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016608-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-031-shared-cortex-expansion-031",
+      "title": "Shared Cortex Expansion 031",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016686-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-032-shared-cortex-expansion-032",
+      "title": "Shared Cortex Expansion 032",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016762-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-033-shared-cortex-expansion-033",
+      "title": "Shared Cortex Expansion 033",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016849-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-034-shared-cortex-expansion-034",
+      "title": "Shared Cortex Expansion 034",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016924-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-035-shared-cortex-expansion-035",
+      "title": "Shared Cortex Expansion 035",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.016997-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-036-shared-cortex-expansion-036",
+      "title": "Shared Cortex Expansion 036",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.017066-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-037-shared-cortex-expansion-037",
+      "title": "Shared Cortex Expansion 037",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.017138-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-038-shared-cortex-expansion-038",
+      "title": "Shared Cortex Expansion 038",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.017213-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
+      }
+    },
+    {
+      "task_id": "task-039-shared-cortex-expansion-039",
+      "title": "Shared Cortex Expansion 039",
+      "phase": "3.2",
+      "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+      "status": "planned",
+      "current_stage": "bugfix",
+      "stages_completed": [],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T15:22:55.017282-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md"
       }
     }
   ],
@@ -378,9 +674,42 @@
         "test": "pipeline/task-011-realtime-learning/test.md",
         "deploy": "pipeline/task-011-realtime-learning/deploy.md"
       }
+    },
+    {
+      "task_id": "task-018-memory-consolidation",
+      "title": "Memory Consolidation System",
+      "phase": "2.2",
+      "description": "Implement memory consolidation pipeline to merge redundant memories, promote validated patterns, archive low-utility noise, and flag contradictions with configurable rules and scheduled execution.",
+      "status": "completed",
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy",
+        "done"
+      ],
+      "stages_blocked": [],
+      "started_at": "2026-02-21T11:00:00-05:00",
+      "artifacts": {
+        "bugfix": "pipeline/bugfix-2026-02-21.md",
+        "requirements": "pipeline/task-018-memory-consolidation/requirements.md",
+        "design": "pipeline/task-018-memory-consolidation/design.md",
+        "document": "pipeline/task-018-memory-consolidation/document.md",
+        "documentation": "pipeline/task-018-memory-consolidation/document.md",
+        "build": "pipeline/task-018-memory-consolidation/build-report.md",
+        "security": "pipeline/task-018-memory-consolidation/security.md",
+        "test": "pipeline/task-018-memory-consolidation/test.md",
+        "deploy": "pipeline/task-018-memory-consolidation/deploy.md"
+      },
+      "completed_at": "2026-02-21T15:01:21-05:00"
     }
   ],
-  "next_task_id": 19,
+  "next_task_id": 40,
   "queued_tasks": [
     {
       "task_id": "task-012-radio-logbook",
