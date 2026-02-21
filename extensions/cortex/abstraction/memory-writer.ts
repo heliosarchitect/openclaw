@@ -23,7 +23,7 @@ export async function writeCompressedMemory(
 
   // Get date range of sources
   const rangeRow = await bridge.getSQL<{ min_ts: string; max_ts: string }>(
-    `SELECT MIN(timestamp) as min_ts, MAX(timestamp) as max_ts FROM stm WHERE id IN (${placeholders})`,
+    `SELECT MIN(created_at) as min_ts, MAX(created_at) as max_ts FROM stm WHERE id IN (${placeholders})`,
     cluster.member_ids,
   );
 
@@ -60,7 +60,7 @@ export async function writeCompressedMemory(
   });
 
   await bridge.runSQL(
-    `INSERT INTO stm (id, content, categories, importance, timestamp, access_count, compressed_from, source)
+    `INSERT INTO stm (id, content, categories, importance, created_at, access_count, compressed_from, source)
      VALUES (?, ?, ?, ?, ?, 0, ?, 'abstraction-engine')`,
     [id, distillation.abstraction, categories, importance, now, compressedFrom],
   );
