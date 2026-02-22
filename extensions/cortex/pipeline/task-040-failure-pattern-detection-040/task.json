@@ -1,0 +1,14 @@
+{
+  "task_id": "task-040-failure-pattern-detection-040",
+  "title": "Failure Pattern Detection Engine",
+  "phase": "4.1",
+  "description": "Detect recurring failure patterns via clustering and generate actionable pattern reports with severity and suggested SOP gaps.",
+  "status": "active",
+  "current_stage": "requirements",
+  "stages_completed": ["bugfix"],
+  "stages_blocked": [],
+  "started_at": "2026-02-22T09:02:11.260777-05:00",
+  "artifacts": {
+    "bugfix": "pipeline/task-040-failure-pattern-detection-040/bugfix.md"
+  }
+}
