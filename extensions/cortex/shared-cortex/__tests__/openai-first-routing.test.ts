@@ -185,6 +185,10 @@ describe("shared cortex — model router", () => {
 
     expect(seenModels).toEqual([OPENAI_PRIMARY_MODEL, "openai/gpt-5.2"]);
     expect(result.selectedModel).toBe("openai/gpt-5.2");
+    expect(result.attemptHistory).toEqual([
+      { model: OPENAI_PRIMARY_MODEL, success: false, fallbackReason: "timeout" },
+      { model: "openai/gpt-5.2", success: true, fallbackReason: "timeout" },
+    ]);
   });
 
   it("formats fallback transitions as machine-parseable JSONL", () => {

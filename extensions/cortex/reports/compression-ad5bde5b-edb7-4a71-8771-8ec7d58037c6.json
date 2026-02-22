@@ -1,0 +1,21 @@
+{
+  "run_id": "ad5bde5b-edb7-4a71-8771-8ec7d58037c6",
+  "started_at": "2026-02-21T15:13:27.296Z",
+  "finished_at": "2026-02-21T15:13:28.415Z",
+  "duration_ms": 1119,
+  "memories_scanned": 1727,
+  "clusters_found": 0,
+  "clusters_skipped": 0,
+  "clusters_compressed": 0,
+  "memories_archived": 0,
+  "abstractions_created": 0,
+  "atoms_created": 0,
+  "atoms_enriched": 0,
+  "tokens_before": 192148,
+  "tokens_after": 192148,
+  "token_reduction_pct": 0,
+  "avg_compression_ratio": 0,
+  "max_compression_ratio": 0,
+  "errors": [],
+  "verdict": "PASS"
+}

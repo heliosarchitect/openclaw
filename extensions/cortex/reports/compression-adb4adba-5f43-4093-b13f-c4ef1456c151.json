@@ -1,0 +1,106 @@
+{
+  "run_id": "adb4adba-5f43-4093-b13f-c4ef1456c151",
+  "started_at": "2026-02-21T14:47:43.377Z",
+  "finished_at": "2026-02-21T14:48:33.224Z",
+  "duration_ms": 49847,
+  "memories_scanned": 1832,
+  "clusters_found": 14,
+  "clusters_skipped": 14,
+  "clusters_compressed": 0,
+  "memories_archived": 133,
+  "abstractions_created": 14,
+  "atoms_created": 0,
+  "atoms_enriched": 0,
+  "tokens_before": 195623,
+  "tokens_after": 192148,
+  "token_reduction_pct": 1.7763759885085086,
+  "avg_compression_ratio": 0,
+  "max_compression_ratio": 0,
+  "errors": [
+    {
+      "cluster_id": "42974169-1e8f-48a7-88de-65f86a6df69e",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:47:51.062Z"
+    },
+    {
+      "cluster_id": "9e20eb27-6d4b-4ed7-8d6e-8f085b4617d7",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:47:58.033Z"
+    },
+    {
+      "cluster_id": "e1ed14ab-a63a-465a-9138-ea8a205c9041",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:01.477Z"
+    },
+    {
+      "cluster_id": "89ac5984-a673-4f9c-b485-8da2f66c52f5",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:05.516Z"
+    },
+    {
+      "cluster_id": "2057cbae-1732-4c4d-a5b5-442c5cd1209f",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:07.547Z"
+    },
+    {
+      "cluster_id": "f8ad4323-ff81-40fe-a496-6cabc951428b",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:13.217Z"
+    },
+    {
+      "cluster_id": "299b8390-fa09-48f2-a91c-9dda9f3a17d4",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:15.017Z"
+    },
+    {
+      "cluster_id": "8f782b9d-a03c-41da-aa70-ab945dacb768",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:18.552Z"
+    },
+    {
+      "cluster_id": "92854c47-5d53-42f4-8bbd-d0b4dacc7fa2",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:21.831Z"
+    },
+    {
+      "cluster_id": "e2bbb5e4-52a5-4832-a5ed-9e90175aeac6",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:23.721Z"
+    },
+    {
+      "cluster_id": "7c600b5b-15ab-4319-95b8-a07b4c50bf2b",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:24.833Z"
+    },
+    {
+      "cluster_id": "54c70cfc-76ca-4175-86b9-48ea009fb583",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:27.387Z"
+    },
+    {
+      "cluster_id": "371a537a-958e-43bd-899b-cc7822c98050",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:30.318Z"
+    },
+    {
+      "cluster_id": "3aba39a4-12e9-47c6-ad8a-ca98c8583cb7",
+      "stage": "distill",
+      "message": "Error: Python error (exit 1): Traceback (most recent call last):\n  File \"<string>\", line 6, in <module>\n    db.execute(sql, params)\n    ~~~~~~~~~~^^^^^^^^^^^^^\nsqlite3.OperationalError: cannot commit - no transaction is active\n",
+      "timestamp": "2026-02-21T14:48:33.195Z"
+    }
+  ],
+  "verdict": "FAIL"
+}

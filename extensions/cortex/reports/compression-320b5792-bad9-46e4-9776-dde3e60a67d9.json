@@ -1,0 +1,106 @@
+{
+  "run_id": "320b5792-bad9-46e4-9776-dde3e60a67d9",
+  "started_at": "2026-02-21T14:46:04.147Z",
+  "finished_at": "2026-02-21T14:46:08.013Z",
+  "duration_ms": 3866,
+  "memories_scanned": 1832,
+  "clusters_found": 14,
+  "clusters_skipped": 14,
+  "clusters_compressed": 0,
+  "memories_archived": 0,
+  "abstractions_created": 0,
+  "atoms_created": 0,
+  "atoms_enriched": 0,
+  "tokens_before": 195623,
+  "tokens_after": 195623,
+  "token_reduction_pct": 0,
+  "avg_compression_ratio": 0,
+  "max_compression_ratio": 0,
+  "errors": [
+    {
+      "cluster_id": "ebacfcfe-7739-4031-82ac-83df8fda4dd0",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPssfcUZmWJY4VGYXtB\"}",
+      "timestamp": "2026-02-21T14:46:05.314Z"
+    },
+    {
+      "cluster_id": "099f4fe5-088d-4934-b0dc-b74cfd43a195",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPsu1E84joogD1gYQbM\"}",
+      "timestamp": "2026-02-21T14:46:05.710Z"
+    },
+    {
+      "cluster_id": "fbd4fb27-2c68-4b34-a373-12e90949ec16",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPsvW2HZZXaLxJ7d4ut\"}",
+      "timestamp": "2026-02-21T14:46:05.993Z"
+    },
+    {
+      "cluster_id": "6809bc8b-1a65-4c64-a460-622a5e14a130",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPswaWQjWwnxtC9reNh\"}",
+      "timestamp": "2026-02-21T14:46:06.130Z"
+    },
+    {
+      "cluster_id": "b4994a05-8c66-4c61-8259-f7ed24d6db9d",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPsxBEH5zknaNStzvgb\"}",
+      "timestamp": "2026-02-21T14:46:06.274Z"
+    },
+    {
+      "cluster_id": "0625a3f4-af80-4948-b212-d4d3bbcc57df",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPsxnSL7sb8Ars56hFg\"}",
+      "timestamp": "2026-02-21T14:46:06.454Z"
+    },
+    {
+      "cluster_id": "599b07af-64d3-4cac-a0e4-2468dc2a97ba",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPsyYLDivYX5u2QuxeT\"}",
+      "timestamp": "2026-02-21T14:46:06.594Z"
+    },
+    {
+      "cluster_id": "a45ac616-2acc-4a8e-b820-5cc9fd75ddfa",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPszNvvRCmURdDj5AGA\"}",
+      "timestamp": "2026-02-21T14:46:06.869Z"
+    },
+    {
+      "cluster_id": "e11b7a54-ad9b-4d65-9bd9-f476cc1ad5e3",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPt1LjLrUT3Rd4PQXZV\"}",
+      "timestamp": "2026-02-21T14:46:07.170Z"
+    },
+    {
+      "cluster_id": "0ce2686d-d553-49d2-8953-20ee07e33c53",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPt2eN3ziGdPRRZZ8iv\"}",
+      "timestamp": "2026-02-21T14:46:07.362Z"
+    },
+    {
+      "cluster_id": "2ed4d1ef-10de-478f-95ec-2fb85dd67671",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPt3UDhAYJPhiQNRrSs\"}",
+      "timestamp": "2026-02-21T14:46:07.540Z"
+    },
+    {
+      "cluster_id": "d9dc81e8-268d-4a53-af16-e3c6fca82a9a",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPt4ErUafpHjs8tzmQ6\"}",
+      "timestamp": "2026-02-21T14:46:07.693Z"
+    },
+    {
+      "cluster_id": "56a0622d-d327-42a4-83a3-1fef56638a7d",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPt4sZK9ha15B3Wm6pZ\"}",
+      "timestamp": "2026-02-21T14:46:07.829Z"
+    },
+    {
+      "cluster_id": "bc14ca9f-ac8d-4960-9999-36eb6d1e6cd8",
+      "stage": "distill",
+      "message": "Error: Anthropic API error 404: {\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-haiku-4-20250414\"},\"request_id\":\"req_011CYMPt5TmwhLpeQ2PzgkYf\"}",
+      "timestamp": "2026-02-21T14:46:07.980Z"
+    }
+  ],
+  "verdict": "FAIL"
+}

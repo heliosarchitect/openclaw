@@ -1,0 +1,14 @@
+{
+  "task_id": "task-019-shared-cortex-architecture",
+  "title": "Shared Cortex Architecture for Sub-Agents",
+  "phase": "3.1",
+  "description": "Implement parent-child Cortex knowledge inheritance and contribution APIs so sub-agents can read high-confidence context and contribute validated learnings back.",
+  "status": "active",
+  "current_stage": "requirements",
+  "stages_completed": ["bugfix"],
+  "stages_blocked": [],
+  "started_at": "2026-02-21T15:01:21-05:00",
+  "artifacts": {
+    "bugfix": "../bugfix-2026-02-21.md"
+  }
+}

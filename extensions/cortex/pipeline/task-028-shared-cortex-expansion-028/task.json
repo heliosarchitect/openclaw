@@ -1,0 +1,14 @@
+{
+  "task_id": "task-028-shared-cortex-expansion-028",
+  "title": "Shared Cortex Expansion 028",
+  "phase": "3.2",
+  "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
+  "status": "planned",
+  "current_stage": "security",
+  "stages_completed": ["bugfix", "requirements", "design", "document", "build", "security"],
+  "stages_blocked": [],
+  "started_at": "2026-02-21T15:22:55.016465-05:00",
+  "artifacts": {
+    "bugfix": "pipeline/bugfix-2026-02-21.md"
+  }
+}

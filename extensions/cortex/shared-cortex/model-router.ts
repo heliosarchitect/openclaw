@@ -67,6 +67,12 @@ export function buildFallbackJsonlLine(params: {
   });
 }
 
+export interface AttemptHistoryItem {
+  model: string;
+  success: boolean;
+  fallbackReason?: Exclude<FallbackReason, "none">;
+}
+
 export async function runWithSharedModelRouter(
   input: SharedModelRouterInput,
   deps: SharedModelRouterDeps,
@@ -75,6 +81,7 @@ export async function runWithSharedModelRouter(
   attempts: number;
   routeType: RouteType;
   policyAudit: string[];
+  attemptHistory: AttemptHistoryItem[];
 }> {
   const attemptedModels: string[] = [];
   const attemptLimit = Math.max(1, input.attemptBudget ?? OPENAI_FALLBACK_CHAIN.length + 1);
@@ -84,6 +91,7 @@ export async function runWithSharedModelRouter(
   let lastError: unknown;
   let lastReason: Exclude<FallbackReason, "none"> = "capacity";
   let policyAudit: string[] = routeTypeDefaulted ? ["route_type_defaulted"] : [];
+  const attemptHistory: AttemptHistoryItem[] = [];
 
   for (let attempt = 1; attempt <= attemptLimit; attempt += 1) {
     const resolved = resolveModel({
@@ -119,7 +127,13 @@ export async function runWithSharedModelRouter(
         attempt_count: attempt,
       });
 
-      return { selectedModel, attempts: attempt, routeType, policyAudit };
+      attemptHistory.push({
+        model: selectedModel,
+        success: true,
+        fallbackReason: resolved.fallbackReason === "none" ? undefined : resolved.fallbackReason,
+      });
+
+      return { selectedModel, attempts: attempt, routeType, policyAudit, attemptHistory };
     } catch (error) {
       lastError = error;
       lastReason = classifyFallbackReason(error, input.userOverrideModel);
@@ -140,6 +154,12 @@ export async function runWithSharedModelRouter(
         created_at: deps.nowIso?.(),
         error_class: (error as { name?: string } | undefined)?.name ?? "Unknown",
         attempt_count: attempt,
+      });
+
+      attemptHistory.push({
+        model: selectedModel,
+        success: false,
+        fallbackReason: lastReason,
       });
 
       if (attempt >= attemptLimit) break;

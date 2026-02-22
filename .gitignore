@@ -107,3 +107,8 @@ package-lock.json
 *.rar
 *.7z
 
+
+# local env backups / secrets
+.env*
+!.env.example
+.codex-cortex/

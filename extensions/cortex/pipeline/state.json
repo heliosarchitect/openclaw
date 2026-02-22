@@ -7,12 +7,28 @@
       "phase": "3.1",
       "description": "Implement parent-child Cortex knowledge inheritance and contribution APIs so sub-agents can read high-confidence context and contribute validated learnings back.",
       "status": "active",
-      "current_stage": "requirements",
-      "stages_completed": ["bugfix"],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:01:21-05:00",
       "artifacts": {
-        "bugfix": "pipeline/task-019-shared-cortex-architecture/bugfix.md"
+        "bugfix": "pipeline/task-019-shared-cortex-architecture/bugfix.md",
+        "requirements": "pipeline/task-019-shared-cortex-architecture/requirements.md",
+        "design": "pipeline/task-019-shared-cortex-architecture/design.md",
+        "documentation": "pipeline/task-019-shared-cortex-architecture/document.md",
+        "build": "pipeline/task-019-shared-cortex-architecture/build.md",
+        "security": "pipeline/task-019-shared-cortex-architecture/security.md",
+        "test": "pipeline/task-019-shared-cortex-architecture/test.md",
+        "deploy": "pipeline/task-019-shared-cortex-architecture/deploy.md"
       }
     },
     {
@@ -82,12 +98,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016006-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-022-shared-cortex-expansion-022/bugfix.md",
+        "requirements": "pipeline/task-022-shared-cortex-expansion-022/requirements.md",
+        "design": "pipeline/task-022-shared-cortex-expansion-022/design.md",
+        "documentation": "pipeline/task-022-shared-cortex-expansion-022/document.md",
+        "build": "pipeline/task-022-shared-cortex-expansion-022/build.md",
+        "security": "pipeline/task-022-shared-cortex-expansion-022/security.md",
+        "test": "pipeline/task-022-shared-cortex-expansion-022/test.md",
+        "deploy": "pipeline/task-022-shared-cortex-expansion-022/deploy.md"
       }
     },
     {
@@ -96,12 +128,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016083-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-023-shared-cortex-expansion-023/bugfix.md",
+        "requirements": "pipeline/task-023-shared-cortex-expansion-023/requirements.md",
+        "design": "pipeline/task-023-shared-cortex-expansion-023/design.md",
+        "documentation": "pipeline/task-023-shared-cortex-expansion-023/document.md",
+        "build": "pipeline/task-023-shared-cortex-expansion-023/build.md",
+        "security": "pipeline/task-023-shared-cortex-expansion-023/security.md",
+        "test": "pipeline/task-023-shared-cortex-expansion-023/test.md",
+        "deploy": "pipeline/task-023-shared-cortex-expansion-023/deploy.md"
       }
     },
     {
@@ -110,12 +158,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016160-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-024-shared-cortex-expansion-024/bugfix.md",
+        "requirements": "pipeline/task-024-shared-cortex-expansion-024/requirements.md",
+        "design": "pipeline/task-024-shared-cortex-expansion-024/design.md",
+        "documentation": "pipeline/task-024-shared-cortex-expansion-024/document.md",
+        "build": "pipeline/task-024-shared-cortex-expansion-024/build.md",
+        "security": "pipeline/task-024-shared-cortex-expansion-024/security.md",
+        "test": "pipeline/task-024-shared-cortex-expansion-024/test.md",
+        "deploy": "pipeline/task-024-shared-cortex-expansion-024/deploy.md"
       }
     },
     {
@@ -124,12 +188,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016234-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-025-shared-cortex-expansion-025/bugfix.md",
+        "requirements": "pipeline/task-025-shared-cortex-expansion-025/requirements.md",
+        "design": "pipeline/task-025-shared-cortex-expansion-025/design.md",
+        "documentation": "pipeline/task-025-shared-cortex-expansion-025/document.md",
+        "build": "pipeline/task-025-shared-cortex-expansion-025/build.md",
+        "security": "pipeline/task-025-shared-cortex-expansion-025/security.md",
+        "test": "pipeline/task-025-shared-cortex-expansion-025/test.md",
+        "deploy": "pipeline/task-025-shared-cortex-expansion-025/deploy.md"
       }
     },
     {
@@ -138,12 +218,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016314-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-026-shared-cortex-expansion-026/bugfix.md",
+        "requirements": "pipeline/task-026-shared-cortex-expansion-026/requirements.md",
+        "design": "pipeline/task-026-shared-cortex-expansion-026/design.md",
+        "documentation": "pipeline/task-026-shared-cortex-expansion-026/document.md",
+        "build": "pipeline/task-026-shared-cortex-expansion-026/build.md",
+        "security": "pipeline/task-026-shared-cortex-expansion-026/security.md",
+        "test": "pipeline/task-026-shared-cortex-expansion-026/test.md",
+        "deploy": "pipeline/task-026-shared-cortex-expansion-026/deploy.md"
       }
     },
     {
@@ -152,12 +248,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016386-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-027-shared-cortex-expansion-027/bugfix.md",
+        "requirements": "pipeline/task-027-shared-cortex-expansion-027/requirements.md",
+        "design": "pipeline/task-027-shared-cortex-expansion-027/design.md",
+        "documentation": "pipeline/task-027-shared-cortex-expansion-027/document.md",
+        "build": "pipeline/task-027-shared-cortex-expansion-027/build.md",
+        "security": "pipeline/task-027-shared-cortex-expansion-027/security.md",
+        "test": "pipeline/task-027-shared-cortex-expansion-027/test.md",
+        "deploy": "pipeline/task-027-shared-cortex-expansion-027/deploy.md"
       }
     },
     {
@@ -166,12 +278,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016465-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-028-shared-cortex-expansion-028/bugfix.md",
+        "requirements": "pipeline/task-028-shared-cortex-expansion-028/requirements.md",
+        "design": "pipeline/task-028-shared-cortex-expansion-028/design.md",
+        "documentation": "pipeline/task-028-shared-cortex-expansion-028/document.md",
+        "build": "pipeline/task-028-shared-cortex-expansion-028/build.md",
+        "security": "pipeline/task-028-shared-cortex-expansion-028/security.md",
+        "test": "pipeline/task-028-shared-cortex-expansion-028/test.md",
+        "deploy": "pipeline/task-028-shared-cortex-expansion-028/deploy.md"
       }
     },
     {
@@ -180,12 +308,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016536-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-029-shared-cortex-expansion-029/bugfix.md",
+        "requirements": "pipeline/task-029-shared-cortex-expansion-029/requirements.md",
+        "design": "pipeline/task-029-shared-cortex-expansion-029/design.md",
+        "documentation": "pipeline/task-029-shared-cortex-expansion-029/document.md",
+        "build": "pipeline/task-029-shared-cortex-expansion-029/build.md",
+        "security": "pipeline/task-029-shared-cortex-expansion-029/security.md",
+        "test": "pipeline/task-029-shared-cortex-expansion-029/test.md",
+        "deploy": "pipeline/task-029-shared-cortex-expansion-029/deploy.md"
       }
     },
     {
@@ -194,12 +338,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016608-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-030-shared-cortex-expansion-030/bugfix.md",
+        "requirements": "pipeline/task-030-shared-cortex-expansion-030/requirements.md",
+        "design": "pipeline/task-030-shared-cortex-expansion-030/design.md",
+        "documentation": "pipeline/task-030-shared-cortex-expansion-030/document.md",
+        "build": "pipeline/task-030-shared-cortex-expansion-030/build.md",
+        "security": "pipeline/task-030-shared-cortex-expansion-030/security.md",
+        "test": "pipeline/task-030-shared-cortex-expansion-030/test.md",
+        "deploy": "pipeline/task-030-shared-cortex-expansion-030/deploy.md"
       }
     },
     {
@@ -208,12 +368,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016686-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-031-shared-cortex-expansion-031/bugfix.md",
+        "requirements": "pipeline/task-031-shared-cortex-expansion-031/requirements.md",
+        "design": "pipeline/task-031-shared-cortex-expansion-031/design.md",
+        "documentation": "pipeline/task-031-shared-cortex-expansion-031/document.md",
+        "build": "pipeline/task-031-shared-cortex-expansion-031/build.md",
+        "security": "pipeline/task-031-shared-cortex-expansion-031/security.md",
+        "test": "pipeline/task-031-shared-cortex-expansion-031/test.md",
+        "deploy": "pipeline/task-031-shared-cortex-expansion-031/deploy.md"
       }
     },
     {
@@ -222,12 +398,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "security",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016762-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-032-shared-cortex-expansion-032/bugfix.md",
+        "requirements": "pipeline/task-032-shared-cortex-expansion-032/requirements.md",
+        "design": "pipeline/task-032-shared-cortex-expansion-032/design.md",
+        "documentation": "pipeline/task-032-shared-cortex-expansion-032/document.md",
+        "build": "pipeline/task-032-shared-cortex-expansion-032/build.md",
+        "security": "pipeline/task-032-shared-cortex-expansion-032/security.md",
+        "test": "pipeline/task-032-shared-cortex-expansion-032/test.md",
+        "deploy": "pipeline/task-032-shared-cortex-expansion-032/deploy.md"
       }
     },
     {
@@ -236,12 +428,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016849-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-033-shared-cortex-expansion-033/bugfix.md",
+        "requirements": "pipeline/task-033-shared-cortex-expansion-033/requirements.md",
+        "design": "pipeline/task-033-shared-cortex-expansion-033/design.md",
+        "documentation": "pipeline/task-033-shared-cortex-expansion-033/document.md",
+        "build": "pipeline/task-033-shared-cortex-expansion-033/build.md",
+        "security": "pipeline/task-033-shared-cortex-expansion-033/security.md",
+        "test": "pipeline/task-033-shared-cortex-expansion-033/test.md",
+        "deploy": "pipeline/task-033-shared-cortex-expansion-033/deploy.md"
       }
     },
     {
@@ -250,12 +458,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016924-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-034-shared-cortex-expansion-034/bugfix.md",
+        "requirements": "pipeline/task-034-shared-cortex-expansion-034/requirements.md",
+        "design": "pipeline/task-034-shared-cortex-expansion-034/design.md",
+        "documentation": "pipeline/task-034-shared-cortex-expansion-034/document.md",
+        "build": "pipeline/task-034-shared-cortex-expansion-034/build.md",
+        "security": "pipeline/task-034-shared-cortex-expansion-034/security.md",
+        "test": "pipeline/task-034-shared-cortex-expansion-034/test.md",
+        "deploy": "pipeline/task-034-shared-cortex-expansion-034/deploy.md"
       }
     },
     {
@@ -264,12 +488,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.016997-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-035-shared-cortex-expansion-035/bugfix.md",
+        "requirements": "pipeline/task-035-shared-cortex-expansion-035/requirements.md",
+        "design": "pipeline/task-035-shared-cortex-expansion-035/design.md",
+        "documentation": "pipeline/task-035-shared-cortex-expansion-035/document.md",
+        "build": "pipeline/task-035-shared-cortex-expansion-035/build.md",
+        "security": "pipeline/task-035-shared-cortex-expansion-035/security.md",
+        "test": "pipeline/task-035-shared-cortex-expansion-035/test.md",
+        "deploy": "pipeline/task-035-shared-cortex-expansion-035/deploy.md"
       }
     },
     {
@@ -278,12 +518,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.017066-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-036-shared-cortex-expansion-036/bugfix.md",
+        "requirements": "pipeline/task-036-shared-cortex-expansion-036/requirements.md",
+        "design": "pipeline/task-036-shared-cortex-expansion-036/design.md",
+        "documentation": "pipeline/task-036-shared-cortex-expansion-036/document.md",
+        "build": "pipeline/task-036-shared-cortex-expansion-036/build.md",
+        "security": "pipeline/task-036-shared-cortex-expansion-036/security.md",
+        "test": "pipeline/task-036-shared-cortex-expansion-036/test.md",
+        "deploy": "pipeline/task-036-shared-cortex-expansion-036/deploy.md"
       }
     },
     {
@@ -292,12 +548,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.017138-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-037-shared-cortex-expansion-037/bugfix.md",
+        "requirements": "pipeline/task-037-shared-cortex-expansion-037/requirements.md",
+        "design": "pipeline/task-037-shared-cortex-expansion-037/design.md",
+        "documentation": "pipeline/task-037-shared-cortex-expansion-037/document.md",
+        "build": "pipeline/task-037-shared-cortex-expansion-037/build.md",
+        "security": "pipeline/task-037-shared-cortex-expansion-037/security.md",
+        "test": "pipeline/task-037-shared-cortex-expansion-037/test.md",
+        "deploy": "pipeline/task-037-shared-cortex-expansion-037/deploy.md"
       }
     },
     {
@@ -306,12 +578,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.017213-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-038-shared-cortex-expansion-038/bugfix.md",
+        "requirements": "pipeline/task-038-shared-cortex-expansion-038/requirements.md",
+        "design": "pipeline/task-038-shared-cortex-expansion-038/design.md",
+        "documentation": "pipeline/task-038-shared-cortex-expansion-038/document.md",
+        "build": "pipeline/task-038-shared-cortex-expansion-038/build.md",
+        "security": "pipeline/task-038-shared-cortex-expansion-038/security.md",
+        "test": "pipeline/task-038-shared-cortex-expansion-038/test.md",
+        "deploy": "pipeline/task-038-shared-cortex-expansion-038/deploy.md"
       }
     },
     {
@@ -320,12 +608,28 @@
       "phase": "3.2",
       "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
       "status": "planned",
-      "current_stage": "bugfix",
-      "stages_completed": [],
+      "current_stage": "done",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test",
+        "deploy"
+      ],
       "stages_blocked": [],
       "started_at": "2026-02-21T15:22:55.017282-05:00",
       "artifacts": {
-        "bugfix": "pipeline/bugfix-2026-02-21.md"
+        "bugfix": "pipeline/task-039-shared-cortex-expansion-039/bugfix.md",
+        "requirements": "pipeline/task-039-shared-cortex-expansion-039/requirements.md",
+        "design": "pipeline/task-039-shared-cortex-expansion-039/design.md",
+        "documentation": "pipeline/task-039-shared-cortex-expansion-039/document.md",
+        "build": "pipeline/task-039-shared-cortex-expansion-039/build.md",
+        "security": "pipeline/task-039-shared-cortex-expansion-039/security.md",
+        "test": "pipeline/task-039-shared-cortex-expansion-039/test.md",
+        "deploy": "pipeline/task-039-shared-cortex-expansion-039/deploy.md"
       }
     }
   ],
@@ -737,7 +1041,7 @@
     }
   ],
   "status": "running",
-  "current_stage": "requirements",
-  "stages_completed": ["bugfix"],
+  "current_stage": "design",
+  "stages_completed": ["bugfix", "requirements"],
   "killed_tasks": []
 }
