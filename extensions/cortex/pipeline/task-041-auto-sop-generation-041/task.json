@@ -1,0 +1,47 @@
+{
+  "project": "cortex",
+  "task_number": 41,
+  "task_id": "task-041-auto-sop-generation-041",
+  "title": "Auto-SOP Generation Engine",
+  "phase": "4.2",
+  "description": "Generate SOP proposals from repeated successful execution patterns with validation gates and Synapse delivery.",
+  "status": "active",
+  "current_stage": "deploy",
+  "stages_completed": ["bugfix", "requirements", "design", "document", "build", "test", "security"],
+  "stages_blocked": [],
+  "started_at": "2026-02-23T16:01:26.376894+00:00",
+  "artifacts": {
+    "requirements": "pipeline/task-041-auto-sop-generation-041/requirements.md",
+    "design": "pipeline/task-041-auto-sop-generation-041/design.md",
+    "document": "pipeline/task-041-auto-sop-generation-041/document.md",
+    "documentation": "pipeline/task-041-auto-sop-generation-041/document.md",
+    "build": "pipeline/task-041-auto-sop-generation-041/build.md",
+    "test": "pipeline/task-041-auto-sop-generation-041/test.md",
+    "bugfix": "pipeline/task-041-auto-sop-generation-041/bugfix-report.md",
+    "security": "pipeline/task-041-auto-sop-generation-041/security.md"
+  },
+  "variables": {
+    "proposal_delivery": "synapse",
+    "default_mode": "recommendation_only",
+    "requires_human_validation": true
+  },
+  "pipeline": {
+    "stages": [
+      "bugfix",
+      "requirements",
+      "design",
+      "document",
+      "build",
+      "security",
+      "test",
+      "deploy",
+      "done"
+    ],
+    "status": "active"
+  },
+  "governance": {
+    "approval_mode": "recommended_manual",
+    "decision_state": "proposed"
+  },
+  "updated_at": "2026-02-24T22:09:30Z"
+}

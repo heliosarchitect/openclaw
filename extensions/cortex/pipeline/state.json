@@ -32,7 +32,7 @@
         "deploy": "pipeline/task-019-shared-cortex-architecture/deploy.md",
         "done": "pipeline/task-019-shared-cortex-architecture/done.md"
       },
-      "completed_at": "2026-02-23T15:46:58.242134+00:00"
+      "completed_at": "2026-02-25T13:57:29.142312+00:00"
     },
     {
       "task_id": "task-020-shared-cortex-expansion-020",
@@ -710,6 +710,36 @@
       },
       "updated_at": "2026-02-22T11:19:34.995805-05:00",
       "completed_at": "2026-02-23T16:00:48.516696+00:00"
+    },
+    {
+      "task_id": "task-041-auto-sop-generation-041",
+      "title": "Auto-SOP Generation Engine",
+      "phase": "4.2",
+      "description": "Generate SOP proposals from repeated successful execution patterns with validation gates and Synapse delivery.",
+      "status": "active",
+      "current_stage": "deploy",
+      "stages_completed": [
+        "bugfix",
+        "requirements",
+        "design",
+        "document",
+        "build",
+        "security",
+        "test"
+      ],
+      "stages_blocked": [],
+      "started_at": "2026-02-23T16:01:26.376894+00:00",
+      "artifacts": {
+        "bugfix": "pipeline/task-041-auto-sop-generation-041/bugfix-report.md",
+        "requirements": "pipeline/task-041-auto-sop-generation-041/requirements.md",
+        "design": "pipeline/task-041-auto-sop-generation-041/design.md",
+        "document": "pipeline/task-041-auto-sop-generation-041/document.md",
+        "documentation": "pipeline/task-041-auto-sop-generation-041/document.md",
+        "build": "pipeline/task-041-auto-sop-generation-041/build.md",
+        "security": "pipeline/task-041-auto-sop-generation-041/security.md",
+        "test": "pipeline/task-041-auto-sop-generation-041/test.md"
+      },
+      "updated_at": "2026-02-24T22:09:30Z"
     }
   ],
   "completed_tasks": [
@@ -1092,7 +1122,7 @@
       "completed_at": "2026-02-21T15:01:21-05:00"
     }
   ],
-  "next_task_id": 41,
+  "next_task_id": 42,
   "queued_tasks": [
     {
       "task_id": "task-012-radio-logbook",
