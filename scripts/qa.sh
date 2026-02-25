@@ -11,8 +11,9 @@ if command -v pnpm >/dev/null 2>&1; then
     pnpm -s install
   fi
 
-  echo "[helios] pnpm check"
-  pnpm -s check
+  # QA contract: do not auto-format; prefer lint + tests.
+  echo "[helios] pnpm lint"
+  pnpm -s lint
 
   if pnpm -s run | grep -q "test:fast"; then
     echo "[helios] pnpm test:fast"
