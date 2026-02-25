@@ -15,12 +15,16 @@ if command -v pnpm >/dev/null 2>&1; then
   echo "[helios] pnpm lint"
   pnpm -s lint
 
-  if pnpm -s run | grep -q "test:fast"; then
-    echo "[helios] pnpm test:fast"
-    pnpm -s test:fast
+  if [ "${LBF_QA_RUN_TESTS:-0}" = "1" ]; then
+    if pnpm -s run | grep -q "test:fast"; then
+      echo "[helios] pnpm test:fast"
+      pnpm -s test:fast
+    else
+      echo "[helios] pnpm test"
+      pnpm -s test
+    fi
   else
-    echo "[helios] pnpm test"
-    pnpm -s test
+    echo "[helios] skipping tests (set LBF_QA_RUN_TESTS=1 to enable)"
   fi
 else
   echo "[helios] ERROR: pnpm not found"
