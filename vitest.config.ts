@@ -44,6 +44,7 @@ export default defineConfig({
       "dist/OpenClaw.app/**",
       "**/*.live.test.ts",
       "**/*.e2e.test.ts",
+      "extensions/cortex/adversarial/suites/*.test.ts", // runner-owned scenario files (no direct vitest suites)
     ],
     coverage: {
       provider: "v8",

@@ -12,6 +12,26 @@ _Every constraint has a scar behind it. Remove only when the underlying system c
 
 ---
 
+## Version 2.8.0 - "Auto-SOP Generation (Recommendation-Only)" (February 25, 2026)
+
+### New Features
+
+- **NEW (task-041):** Auto-SOP Generation Engine (MVP)
+  - Deterministic command extraction from pipeline artifacts (shell fences + inline commands)
+  - Command normalization to reduce volatile tokens (SHA/time/home-path)
+  - Deterministic signature payload + stable JSON hashing → 12-hex signature
+  - Proposal JSON schema with enforced governance invariants:
+    - `mode: recommendation_only`
+    - `requires_human_validation: true`
+  - Proposal artifact writer: `extensions/cortex/sop-proposals/<signature>/(proposal.json|proposal.md)`
+
+### Security
+
+- **Hardened markdown rendering**: escape backticks + force one-line inline-code rendering to reduce formatting injection risk
+- **Bounded evidence artifact reads**: refuse to hash evidence outside repoRoot (defensive anti-path-traversal)
+
+---
+
 ## Version 2.7.5 - "SQL Hardening Validated" (February 19, 2026)
 
 ### Security

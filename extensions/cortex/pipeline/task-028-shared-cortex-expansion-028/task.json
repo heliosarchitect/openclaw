@@ -4,11 +4,17 @@
   "phase": "3.2",
   "description": "Planned pipeline item for shared cortex architecture expansion and hardening.",
   "status": "planned",
-  "current_stage": "security",
-  "stages_completed": ["bugfix", "requirements", "design", "document", "build", "security"],
+  "current_stage": "test",
+  "stages_completed": ["bugfix", "requirements", "design", "document", "build", "security", "test"],
   "stages_blocked": [],
   "started_at": "2026-02-21T15:22:55.016465-05:00",
   "artifacts": {
-    "bugfix": "pipeline/bugfix-2026-02-21.md"
+    "bugfix": "pipeline/bugfix-2026-02-21.md",
+    "requirements": "pipeline/task-028-shared-cortex-expansion-028/requirements.md",
+    "design": "pipeline/task-028-shared-cortex-expansion-028/design.md",
+    "document": "pipeline/task-028-shared-cortex-expansion-028/document.md",
+    "build": "pipeline/task-028-shared-cortex-expansion-028/build.md",
+    "security": "pipeline/task-028-shared-cortex-expansion-028/security.md",
+    "test": "pipeline/task-028-shared-cortex-expansion-028/test.md"
   }
 }

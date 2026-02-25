@@ -1,7 +1,7 @@
 meta:
   name: LBF Development Pipeline
-  version: "1.0.0"
-  updated: "2026-02-17"
+  version: "1.1.1"
+  updated: "2026-02-22"
   description: >
     Standard SDLC pipeline for all LBF development. Every feature goes through
     the same chain of specialized agents. Same process every time.
@@ -10,6 +10,31 @@ pipeline:
   # Each stage is a specialized agent role
   # Output of each stage feeds into the next as input
   # Pipeline state tracked in ~/Projects/helios/extensions/cortex/pipeline/
+  # MUST be project-agnostic: never hardcode task IDs, task prefixes, or project names.
+
+  task_manifest_schema:
+    required_fields:
+      - project
+      - task_number
+      - task_id
+      - title
+      - description
+      - variables
+      - pipeline.stages
+      - pipeline.status
+      - governance.approval_mode
+      - governance.decision_state
+    progression_rule: "Advance by (project, task_number), not by filename prefix or literal task IDs."
+    governance:
+      approval_modes: [auto, recommended_manual, manual]
+      decision_states: [proposed, approved_auto, approved_manual, backlog, blocked, done]
+      policy: >
+        Auto-approve low-risk/internal/reversible work. Manual approval required for high-risk,
+        security/auth boundary, or major infra/cost-impacting changes. Human can always reorder,
+        approve, backlog, or block any task.
+    anti_patterns:
+      - "Hardcoded task references like task-040"
+      - "Project-specific assumptions like wems-* only"
 
   stages:
     - id: requirements
@@ -169,6 +194,34 @@ orchestrator:
     spawns the appropriate specialized agent, waits for completion, then
     advances to the next stage. If any stage blocks, the orchestrator reports
     the issue and halts.
+
+automation_control_plane:
+  policy: >
+    Use n8n as the primary orchestrator for multi-step/branching jobs (retries,
+    escalation, approvals, fanout). Keep OpenClaw cron for lightweight heartbeats,
+    simple reminders, and fail-safe watchdog triggers.
+  routing_rules:
+    - "Single-step, deterministic checks/reminders may stay in cron."
+    - "Any workflow requiring >1 step, branching, or escalations should be in n8n."
+    - "Cron jobs that trigger multi-step behavior should hand off to n8n where possible."
+  required_event_payload_fields:
+    - timestamp
+    - project
+    - task_id
+    - stage
+    - issue
+    - error
+    - recovery_attempts
+    - exit_code
+  migration_protocol:
+    - "Migrate one workflow at a time."
+    - "Keep cron fallback enabled until n8n workflow passes forced-failure test."
+    - "After successful n8n validation, reduce cron to fallback or disable it."
+  invariants:
+    - "Discover tasks dynamically from manifests/state every cycle."
+    - "Support mixed-project queues."
+    - "Select next task by lowest unfinished task_number within each project policy."
+    - "No hardcoded task IDs, no project-specific filename assumptions."
   trigger: "Cron job or manual task submission"
   state_tracking: >
     pipeline/state.json contains:
